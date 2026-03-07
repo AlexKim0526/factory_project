@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>생산성 통합 분석 시스템 v13.2</title>
+    <title>생산성 통합 분석 시스템 v13.3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
         :root { --primary: #4f46e5; --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0; --text: #1e293b; --indigo: #eef2ff; }
@@ -36,7 +36,7 @@
 <body>
 <div class="wrapper">
     <div class="header-bar">
-        <div style="font-weight:700; font-size:16px;">📊 생산성 분석 통합 대시보드 v13.2</div>
+        <div style="font-weight:700; font-size:16px;">📊 생산성 분석 통합 대시보드 v13.3</div>
         <div style="display:flex; gap:12px; align-items:center;">
             <div id="dbStatus" style="font-size:11px; font-weight:bold; color:#64748b;">인증 대기 중...</div>
             <button class="btn btn-primary" onclick="saveToGitHub()">💾 설정 저장</button>
@@ -104,10 +104,10 @@
         } catch (e) { status.innerText = "❌ 인증 실패 (토큰 확인)"; status.style.color = "#ef4444"; }
     }
 
-    // 매칭 키 정규화 (모든 공백 제거 및 대문자화)
+    // 키 정규화 (공백 제거 및 대문자화)
     function cleanKey(str) { return str ? str.toString().replace(/\s+/g, '').toUpperCase() : ""; }
     
-    // 날짜 표준화 (YYYY-MM-DD)
+    // 날짜 표준화
     function normalizeDate(raw) {
         const pts = raw.replace(/[\.\/]/g, '-').split('-');
         if (pts.length < 2) return null;
@@ -130,7 +130,6 @@
             const { month, full } = dateObj;
             const catKey = cleanKey(catRaw), itemKey = cleanKey(itemRaw), fName = fNameRaw || "Unknown";
 
-            // 계층 구조는 원본 이름 유지하여 저장
             if (!masterData.hierarchy[catRaw]) masterData.hierarchy[catRaw] = new Set();
             masterData.hierarchy[catRaw].add(itemRaw);
 
@@ -156,6 +155,7 @@
         const sel = document.getElementById('factorySelector');
         sel.innerHTML = '<option value="Total">전체 합계 (Total)</option>';
         Object.keys(masterData.factories).sort().forEach(f => { if(f !== "Total" && f !== "Unknown") sel.innerHTML += `<option value="${f}">${f}</option>`; });
+        for (let c in masterData.hierarchy) masterData.hierarchy[c] = Array.from(masterData.hierarchy[c]).sort();
     }
 
     async function loadConfig() {
@@ -180,7 +180,7 @@
             if(shaRes.ok) currentSha = (await shaRes.json()).sha;
             const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`, {
                 method: "PUT", headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ message: "Update v13.2", content: btoa(encodeURIComponent(JSON.stringify(config)).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))), sha: currentSha })
+                body: JSON.stringify({ message: "Update v13.3", content: btoa(encodeURIComponent(JSON.stringify(config)).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))), sha: currentSha })
             });
             if (res.ok) { currentSha = (await res.json()).content.sha; sync.innerText = "✅ 저장됨"; sync.style.color = "#10b981"; }
         } catch (e) { sync.innerText = "❌ 저장 실패"; sync.style.color = "#ef4444"; }
@@ -239,6 +239,7 @@
         cont.appendChild(div);
     }
 
+    // 핵심 계산 로직 (월별=평균 / 일별=실제)
     function runCalculation() {
         const h = parseFloat(document.getElementById('cfgHours').value) || 8, avail = h * 3600;
         const fKey = document.getElementById('factorySelector').value, fData = masterData.factories[fKey];
@@ -258,10 +259,11 @@
         let bHtml = '';
         Object.keys(fData.months).sort().forEach(m => {
             const mObj = fData.months[m], daysInMonth = new Date(m.split('-')[0], m.split('-')[1], 0).getDate();
-            const avgDaily = mObj.qty / daysInMonth;
+            const avgDailyTotal = mObj.qty / daysInMonth;
 
+            // [월 요약 행] 일평균 물량 기준으로 산출
             bHtml += `<tr class="month-row" onclick="document.querySelectorAll('.detail-${m}').forEach(d=>d.classList.toggle('visible'))">
-                <td style="text-align:left">📂 ${m}</td><td>${mObj.qty.toLocaleString()}</td><td style="color:#4f46e5; font-weight:700;">${Math.round(avgDaily).toLocaleString()}</td>`;
+                <td style="text-align:left">📂 ${m}</td><td>${mObj.qty.toLocaleString()}</td><td style="color:#4f46e5; font-weight:700;">${Math.round(avgDailyTotal).toLocaleString()}</td>`;
             
             let mTotalMan = 0;
             procs.forEach(p => {
@@ -276,25 +278,26 @@
             });
             bHtml += `<td style="background:#f5f3ff; font-weight:700;">${mTotalMan.toFixed(1)}명</td></tr>`;
 
+            // [일 상세 행] 해당 일자 실제 물량 기준으로 산출
             for(let i=1; i<=daysInMonth; i++) {
                 const dKey = `${m}-${String(i).padStart(2, '0')}`, dt = new Date(m.split('-')[0], m.split('-')[1]-1, i);
                 const dData = mObj.days[dKey]; 
-                const dispDayQty = dData ? dData.qty : 0;
+                const actualDayQty = dData ? dData.qty : 0;
                 const wk = Math.ceil((((dt-new Date(dt.getFullYear(),0,1))/86400000)+new Date(dt.getFullYear(),0,1).getDay()+1)/7);
 
                 bHtml += `<tr class="day-row detail-${m} ${wk % 2 === 0 ? 'week-even' : ''}">
-                    <td style="text-align:right; color:#64748b;">└ ${i}일 (${['일','월','화','수','목','금','토'][dt.getDay()]})</td><td>-</td><td>${dispDayQty.toLocaleString()}</td>`;
+                    <td style="text-align:right; color:#64748b;">└ ${i}일 (${['일','월','화','수','목','금','토'][dt.getDay()]})</td><td>-</td><td style="font-weight:700;">${actualDayQty.toLocaleString()}</td>`;
                 
                 let dTotalMan = 0;
                 procs.forEach(p => {
-                    let pDayTargetQty = 0;
+                    let pDayActualQty = 0;
                     if (dData) {
                         p.targets.forEach(t => {
                             const k = cleanKey(t.name);
-                            pDayTargetQty += (t.type === 'cat' ? (dData.cats[k] || 0) : (dData.items[k] || 0));
+                            pDayActualQty += (t.type === 'cat' ? (dData.cats[k] || 0) : (dData.items[k] || 0));
                         });
                     }
-                    const appliedQty = pDayTargetQty * p.ratio;
+                    const appliedQty = pDayActualQty * p.ratio;
                     const dman = (appliedQty * p.workTime) / avail;
                     bHtml += `<td><span>${dman.toFixed(1)}명</span><br><span style="font-size:10px; color:#94a3b8;">(${Math.round(appliedQty).toLocaleString()}건)</span></td>`;
                     dTotalMan += dman;
@@ -302,7 +305,7 @@
                 bHtml += `<td style="background:#f5f3ff;">${dTotalMan.toFixed(1)}명</td></tr>`;
             }
         });
-        document.getElementById('resultBody').innerHTML = bHtml;
+        document.getElementById('resultBody').innerHTML = bHtml || '<tr><td colspan="10" style="padding:100px;">데이터를 불러오지 못했습니다. 공장 필터와 토큰을 확인해 주세요.</td></tr>';
     }
 </script>
 </body>
