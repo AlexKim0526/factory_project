@@ -2,24 +2,24 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>생산성 통합 분석 시스템 v12.0</title>
+    <title>생산성 통합 분석 시스템 v13.0</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
-        :root { --primary: #4f46e5; --bg-main: #f8fafc; --bg-card: #ffffff; --text-main: #1e293b; --border: #e2e8f0; --indigo-50: #eef2ff; }
-        body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: var(--bg-main); margin: 0; color: var(--text-main); height: 100vh; overflow: hidden; }
+        :root { --primary: #4f46e5; --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0; --text: #1e293b; --indigo: #eef2ff; }
+        body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: var(--bg); margin: 0; color: var(--text); height: 100vh; overflow: hidden; }
         .wrapper { display: flex; flex-direction: column; height: 100vh; }
-        .header-bar { background: var(--bg-card); padding: 0 24px; height: 60px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-        .token-setup-bar { background: #fffbeb; border-bottom: 1px solid #fef3c7; padding: 10px 24px; display: flex; align-items: center; gap: 12px; font-size: 12px; flex-shrink: 0; }
+        .header-bar { background: var(--card); padding: 0 24px; height: 60px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .token-setup { background: #fffbeb; border-bottom: 1px solid #fef3c7; padding: 10px 24px; display: flex; align-items: center; gap: 12px; font-size: 12px; flex-shrink: 0; }
         .main-content { display: grid; grid-template-columns: 480px 1fr; flex-grow: 1; overflow: hidden; }
         .column { height: 100%; overflow-y: auto; padding: 25px; box-sizing: border-box; }
         .column-left { border-right: 1px solid var(--border); background: #fcfcfd; }
-        .process-box { background: white; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
-        .proc-header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .badge-input { display: flex; align-items: center; gap: 5px; font-size: 11px; background: #f1f5f9; padding: 3px 8px; border-radius: 5px; }
-        .badge-input input { width: 40px; border: none; background: transparent; font-weight: 700; text-align: center; }
+        .process-box { background: white; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .proc-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .badge-input { display: flex; align-items: center; gap: 5px; font-size: 11px; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; }
+        .badge-input input { width: 45px; border: none; background: transparent; font-weight: 700; color: var(--primary); text-align: center; outline: none; }
         .proc-body { display: none; padding: 15px; background: #fafafa; border-top: 1px solid var(--border); }
         .process-box.active .proc-body { display: block; }
-        .table-container { border-radius: 10px; border: 1px solid var(--border); overflow: hidden; background: white; }
+        .table-container { border-radius: 12px; border: 1px solid var(--border); overflow: hidden; background: white; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th { background: #f8fafc; padding: 12px; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 10; }
         td { padding: 10px; text-align: center; border-bottom: 1px solid var(--border); }
@@ -27,42 +27,40 @@
         .month-row:hover { background: #f1f5f9; }
         .day-row { display: none; background: white; }
         .day-row.visible { display: table-row; }
-        .week-even { background: var(--indigo-50) !important; }
-        .manpower-bold { font-weight: 700; color: #1e293b; }
-        .qty-sub { font-size: 10px; color: #64748b; display: block; }
-        .btn { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 12px; }
+        .week-even { background: var(--indigo) !important; }
+        .btn { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
-        .target-tag { display: flex; justify-content: space-between; background: white; border: 1px solid var(--border); padding: 5px 8px; border-radius: 4px; margin-bottom: 3px; font-size: 11px; }
+        .target-tag { display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid var(--border); padding: 6px 10px; border-radius: 5px; margin-bottom: 5px; font-size: 11px; }
     </style>
 </head>
 <body>
 <div class="wrapper">
     <div class="header-bar">
-        <div style="font-weight:700; font-size:16px;">🚀 생산성 분석 통합 대시보드 v12.0</div>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <div id="dbStatus" class="header-status" style="font-size:11px;">연결 대기 중...</div>
+        <div style="font-weight:700; font-size:16px;">📊 생산성 분석 통합 대시보드 v13.0</div>
+        <div style="display:flex; gap:12px; align-items:center;">
+            <div id="dbStatus" style="font-size:11px; font-weight:bold; color:#64748b;">DB 연결 대기 중...</div>
             <button class="btn btn-primary" onclick="saveToGitHub()">💾 설정 저장</button>
         </div>
     </div>
-    <div class="token-setup-bar">
-        🔑 <strong>GitHub Token:</strong>
-        <input type="password" id="ghTokenInput" style="width:300px; padding:5px; border:1px solid #d4a017; border-radius:4px;" placeholder="ghp_... (코드에 넣지 말고 여기에 입력)">
-        <button class="btn btn-primary" style="padding:5px 10px;" onclick="applyToken()">연결</button>
-        <span id="syncStatus" style="font-size:11px; margin-left:10px;"></span>
+    <div class="token-setup">
+        🔑 <strong>GitHub Token 인증:</strong>
+        <input type="password" id="ghTokenInput" style="width:320px; padding:6px; border:1px solid #d4a017; border-radius:4px;" placeholder="ghp_... 토큰을 입력하세요">
+        <button class="btn btn-primary" style="padding:6px 12px;" onclick="applyToken()">적용 및 로드</button>
+        <span id="syncStatus" style="font-size:11px; font-weight:bold; margin-left:10px;"></span>
     </div>
     <div class="main-content">
         <div class="column column-left">
             <h2>🛠️ 공정 및 대상 설정</h2>
             <div id="processList"></div>
-            <button class="btn" style="width:100%; background:#e2e8f0;" onclick="addNewProcess()">+ 새로운 공정 추가</button>
-            <div style="margin-top:20px; padding:15px; background:white; border-radius:10px; border:1px solid var(--border);">
+            <button class="btn" style="width:100%; background:#e2e8f0; margin-bottom:20px;" onclick="addNewProcess()">+ 새로운 공정 추가</button>
+            <div style="padding:15px; background:white; border-radius:10px; border:1px solid var(--border);">
                 <div class="badge-input" style="padding:10px;">일 근무시간 (h) <input type="number" id="cfgHours" value="8" oninput="runCalculation()"></div>
             </div>
         </div>
         <div class="column">
-            <h2>📊 월별/일별 투입인원 분석</h2>
-            <div style="margin-bottom:10px;">
-                <select id="factorySelector" style="padding:8px; border-radius:5px; border:1px solid var(--border);" onchange="runCalculation()">
+            <h2>📊 분석 결과 (행 클릭 시 상세 분석)</h2>
+            <div style="margin-bottom:15px;">
+                <select id="factorySelector" style="padding:8px; border-radius:6px; border:1px solid var(--border);" onchange="runCalculation()">
                     <option value="Total">전체 합계 (Total)</option>
                 </select>
             </div>
@@ -80,7 +78,6 @@
     let GITHUB_TOKEN = localStorage.getItem('gh_productivity_token') || "";
     const REPO_OWNER = "AlexKim0526", REPO_NAME = "process-data", MASTER_DB_FILE = "masterdb.csv", DATA_FILE = "data.json";
     
-    // 핵심 데이터 트리 구조
     let masterData = { hierarchy: {}, factories: { "Total": { months: {} } } };
     let currentSha = "";
 
@@ -103,10 +100,11 @@
             parseCSV(await res.text());
             status.innerText = "✅ DB 연결됨"; status.style.color = "#166534";
             await loadConfig();
-        } catch (e) { status.innerText = "❌ 인증 실패 (토큰 확인)"; status.style.color = "#991b1b"; }
+        } catch (e) { status.innerText = "❌ 인증 실패 (토큰 확인)"; status.style.color = "#ef4444"; }
     }
 
-    // 날짜를 YYYY-MM-DD 형식으로 완벽하게 통일하는 유연한 파서
+    // 날짜 및 텍스트 정규화 유틸리티
+    function clean(str) { return str ? str.toString().trim() : ""; }
     function normalizeDate(raw) {
         const pts = raw.replace(/[\.\/]/g, '-').split('-');
         if (pts.length < 2) return null;
@@ -121,24 +119,23 @@
         lines.slice(1).forEach(line => {
             if (!line.trim()) return;
             const cols = line.split(regex).map(c => c.replace(/^"|"$/g, '').trim());
-            const rawDate = cols[1], cat = cols[2].trim(), item = cols[3].trim(), fName = cols[4].trim(), qty = parseFloat(cols[5]) || 0;
+            const rawDate = clean(cols[1]), cat = clean(cols[2]), item = clean(cols[3]), fName = clean(cols[4]), qty = parseFloat(cols[5]) || 0;
             
             const dateObj = normalizeDate(rawDate);
             if (!dateObj || !cat || !item) return;
 
             const { month, full } = dateObj;
-
-            // 계층 구조 저장
             if (!masterData.hierarchy[cat]) masterData.hierarchy[cat] = new Set();
             masterData.hierarchy[cat].add(item);
 
-            // 트리 구조 적재 (Month -> Day -> Cat/Item)
             [ "Total", fName ].forEach(target => {
                 if (!masterData.factories[target]) masterData.factories[target] = { months: {} };
                 const f = masterData.factories[target].months;
+                if (!f[month]) f[month] = { qty: 0, cats: {}, items: {}, days: {} };
                 
-                if (!f[month]) f[month] = { qty: 0, days: {} };
                 f[month].qty += qty;
+                f[month].cats[cat] = (f[month].cats[cat] || 0) + qty;
+                f[month].items[item] = (f[month].items[item] || 0) + qty;
 
                 if (full) {
                     if (!f[month].days[full]) f[month].days[full] = { qty: 0, cats: {}, items: {} };
@@ -152,7 +149,7 @@
         
         const sel = document.getElementById('factorySelector');
         sel.innerHTML = '<option value="Total">전체 합계 (Total)</option>';
-        Object.keys(masterData.factories).sort().forEach(f => { if(f !== "Total") sel.innerHTML += `<option value="${f}">${f}</option>`; });
+        Object.keys(masterData.factories).sort().forEach(f => { if(f !== "Total" && f !== "") sel.innerHTML += `<option value="${f}">${f}</option>`; });
     }
 
     async function loadConfig() {
@@ -174,15 +171,15 @@
             targets: Array.from(box.querySelectorAll('.target-row')).map(r => ({ name: r.dataset.name, type: r.dataset.type }))
         }));
         try {
-            sync.innerText = "⏳ 저장 중...";
+            sync.innerText = "⏳ 저장 중..."; sync.style.color = "#64748b";
             const shaRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`, { headers: { "Authorization": `token ${GITHUB_TOKEN}` } });
             if(shaRes.ok) currentSha = (await shaRes.json()).sha;
             const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`, {
                 method: "PUT", headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ message: "Update v12.0", content: btoa(encodeURIComponent(JSON.stringify(config)).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))), sha: currentSha })
+                body: JSON.stringify({ message: "Update v13.0", content: btoa(encodeURIComponent(JSON.stringify(config)).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))), sha: currentSha })
             });
-            if (res.ok) { currentSha = (await res.json()).content.sha; sync.innerText = "✅ 저장됨"; }
-        } catch (e) { sync.innerText = "❌ 저장 실패"; }
+            if (res.ok) { currentSha = (await res.json()).content.sha; sync.innerText = "✅ 저장됨"; sync.style.color = "#10b981"; }
+        } catch (e) { sync.innerText = "❌ 저장 실패"; sync.style.color = "#ef4444"; }
     }
 
     function addNewProcess(name = "", ratio = 100, workTime = 60, targets = []) {
@@ -192,14 +189,18 @@
         Object.keys(masterData.hierarchy).sort().forEach(cat => catOpts += `<option value="${cat}">${cat}</option>`);
         div.innerHTML = `
             <div class="proc-header" onclick="this.closest('.process-box').classList.toggle('active')">
-                <div style="flex-grow:1"><input type="text" class="proc-name-input" value="${name || '신규 공정'}" onclick="event.stopPropagation()" style="font-weight:700; border:none; outline:none; width:180px;">
+                <div style="flex-grow:1"><input type="text" class="proc-name-input" value="${name || '신규 공정'}" onclick="event.stopPropagation()" style="font-weight:700; border:none; outline:none; width:180px; background:transparent;">
                 <div style="display:flex; gap:10px; margin-top:5px;" onclick="event.stopPropagation()">
                     <div class="badge-input">비중 <input type="number" class="proc-ratio" value="${ratio}" oninput="runCalculation()">%</div>
                     <div class="badge-input">시간 <input type="number" class="proc-time" value="${workTime}" oninput="runCalculation()">초</div>
                 </div></div><span>▼</span></div>
             <div class="proc-body">
                 <select class="cat-sel" style="width:100%; padding:8px; margin-bottom:10px; border-radius:5px; border:1px solid #ddd;">${catOpts}</select>
-                <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="addTarget(this, 'cat')">대분류 전체 추가</button>
+                <div style="display:flex; gap:5px; margin-bottom:10px;">
+                    <button class="btn btn-primary" style="flex:1; font-size:11px;" onclick="addTarget(this, 'cat')">대분류 추가</button>
+                    <button class="btn" style="flex:1; font-size:11px; background:#e2e8f0;" onclick="showItems(this)">품목 개별</button>
+                </div>
+                <div class="item-list-area" style="display:none; max-height:150px; overflow-y:auto; border:1px solid #ddd; padding:8px; margin-bottom:10px; background:white; border-radius:5px;"></div>
                 <div class="target-list"></div>
                 <button class="btn" style="width:100%; margin-top:10px; color:#ef4444; background:#fff1f2;" onclick="this.closest('.process-box').remove(); runCalculation();">공정 삭제</button>
             </div>`;
@@ -207,16 +208,30 @@
         targets.forEach(t => createTargetRow(div.querySelector('.target-list'), t.name, t.type));
     }
 
-    function addTarget(btn, type) {
-        const box = btn.closest('.process-box'), cat = box.querySelector('.cat-sel').value;
-        if (cat) createTargetRow(box.querySelector('.target-list'), cat, type);
+    function showItems(btn) {
+        const box = btn.closest('.process-box'), cat = box.querySelector('.cat-sel').value, area = box.querySelector('.item-list-area');
+        if(!cat) return alert("대분류를 먼저 선택하세요.");
+        area.innerHTML = ''; area.style.display = 'block';
+        masterData.hierarchy[cat].forEach(i => {
+            const lbl = document.createElement('label'); lbl.style = "display:flex; align-items:center; gap:8px; padding:4px; font-size:11px; cursor:pointer;";
+            lbl.innerHTML = `<input type="checkbox" value="${i}" onchange="addTarget(this, 'item')"> ${i}`;
+            area.appendChild(lbl);
+        });
+    }
+
+    function addTarget(el, type) {
+        const box = el.closest('.process-box'), list = box.querySelector('.target-list');
+        if (type === 'cat') {
+            const cat = box.querySelector('.cat-sel').value;
+            if(cat) createTargetRow(list, clean(cat), 'cat');
+        } else { if(el.checked) createTargetRow(list, clean(el.value), 'item'); }
         runCalculation();
     }
 
     function createTargetRow(cont, name, type) {
         if ([...cont.querySelectorAll('.target-row')].some(r => r.dataset.name === name)) return;
         const div = document.createElement('div'); div.className = 'target-row'; div.dataset.name = name; div.dataset.type = type;
-        div.innerHTML = `<div class="target-tag"><span><b>[${type === 'cat' ? '대' : '품'}]</b> ${name}</span><span onclick="this.closest('.target-row').remove(); runCalculation();" style="cursor:pointer; color:#ef4444; font-weight:bold;">×</span></div>`;
+        div.innerHTML = `<div class="target-tag"><span><b>[${type === 'cat' ? '대' : '품'}]</b> ${name}</span><span onclick="this.closest('.target-row').remove(); runCalculation();" style="cursor:pointer; color:#ef4444; font-weight:bold; padding:0 5px;">×</span></div>`;
         cont.appendChild(div);
     }
 
@@ -236,42 +251,46 @@
 
         let bHtml = '';
         Object.keys(fData.months).sort().forEach(m => {
-            const mObj = fData.months[m], daysInMonth = Object.keys(mObj.days).length || 30;
+            const mObj = fData.months[m], daysInMonth = new Date(m.split('-')[0], m.split('-')[1], 0).getDate();
             const avgDaily = mObj.qty / daysInMonth;
 
-            // 월 summary
             bHtml += `<tr class="month-row" onclick="document.querySelectorAll('.detail-${m}').forEach(d=>d.classList.toggle('visible'))">
                 <td style="text-align:left">📂 ${m}</td><td>${mObj.qty.toLocaleString()}</td><td style="color:#4f46e5; font-weight:700;">${Math.round(avgDaily).toLocaleString()}</td>`;
             
             let mTotalMan = 0;
             procs.forEach(p => {
                 let pMonthQty = 0;
-                Object.values(mObj.days).forEach(d => {
-                    p.targets.forEach(t => pMonthQty += (t.type === 'cat' ? (d.cats[t.name] || 0) : (d.items[t.name] || 0)));
-                });
+                p.targets.forEach(t => pMonthQty += (t.type === 'cat' ? (mObj.cats[t.name] || 0) : (mObj.items[t.name] || 0)));
                 const man = (pMonthQty * p.ratio * p.workTime) / (avail * daysInMonth);
-                bHtml += `<td><span class="manpower-bold">${man.toFixed(1)}명</span></td>`;
+                bHtml += `<td><span style="font-weight:700;">${man.toFixed(1)}명</span></td>`;
                 mTotalMan += man;
             });
-            bHtml += `<td style="background:#f5f3ff"><span class="manpower-bold">${mTotalMan.toFixed(1)}명</span></td></tr>`;
+            bHtml += `<td style="background:#f5f3ff; font-weight:700;">${mTotalMan.toFixed(1)}명</td></tr>`;
 
-            // 일별 실제 물량 (트리 구조에서 직접 호출)
-            Object.keys(mObj.days).sort().forEach((dKey, idx) => {
-                const dData = mObj.days[dKey], dt = new Date(dKey), wk = Math.ceil((((dt-new Date(dt.getFullYear(),0,1))/86400000)+new Date(dt.getFullYear(),0,1).getDay()+1)/7);
+            for(let i=1; i<=daysInMonth; i++) {
+                const dKey = `${m}-${String(i).padStart(2, '0')}`, dt = new Date(m.split('-')[0], m.split('-')[1]-1, i);
+                const dData = mObj.days[dKey]; // 실제 일별 데이터가 있는지 확인
                 
+                // [보완] 실제 데이터가 없으면 월 평균으로 보간하여 표시
+                const dispQty = dData ? dData.qty : avgDaily;
+                const wk = Math.ceil((((dt-new Date(dt.getFullYear(),0,1))/86400000)+new Date(dt.getFullYear(),0,1).getDay()+1)/7);
+
                 bHtml += `<tr class="day-row detail-${m} ${wk % 2 === 0 ? 'week-even' : ''}">
-                    <td style="text-align:right; color:#64748b;">└ ${dKey.split('-')[2]}일</td><td>-</td><td style="font-weight:700;">${dData.qty.toLocaleString()}</td>`;
+                    <td style="text-align:right; color:#64748b;">└ ${i}일 (${['일','월','화','수','목','금','토'][dt.getDay()]})</td><td>-</td><td>${Math.round(dispQty).toLocaleString()}</td>`;
                 
                 let dTotalMan = 0;
                 procs.forEach(p => {
                     let pDayQty = 0;
-                    p.targets.forEach(t => pDayQty += (t.type === 'cat' ? (dData.cats[t.name] || 0) : (dData.items[t.name] || 0)));
+                    p.targets.forEach(t => {
+                        if (dData) pDayQty += (t.type === 'cat' ? (dData.cats[t.name] || 0) : (dData.items[t.name] || 0));
+                        else pDayQty += (t.type === 'cat' ? (mObj.cats[t.name] || 0) : (mObj.items[t.name] || 0)) / daysInMonth;
+                    });
                     const dman = (pDayQty * p.ratio * p.workTime) / avail;
-                    bHtml += `<td><span class="manpower-bold" style="font-size:11px;">${dman.toFixed(1)}명</span><span class="qty-sub">(${Math.round(pDayQty * p.ratio)}건)</span></td>`;
+                    bHtml += `<td><span>${dman.toFixed(1)}명</span><br><span style="font-size:10px; color:#94a3b8;">(${Math.round(pDayQty * p.ratio)}건)</span></td>`;
                     dTotalMan += dman;
                 });
-                bHtml += `<td style="background:#f5f3ff"><span class="manpower-bold" style="font-size:11px;">${dTotalMan.toFixed(1)}명</span></td></tr>`;
-            });
+                bHtml += `<td style="background:#f5f3ff;">${dTotalMan.toFixed(1)}명</td></tr>`;
+            }
         });
         document.getElementById('resultBody').innerHTML = bHtml;
     }
