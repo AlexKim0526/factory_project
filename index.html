@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>생산성 통합 분석 시스템 v13.0</title>
+    <title>생산성 통합 분석 시스템 v13.1</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
         :root { --primary: #4f46e5; --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0; --text: #1e293b; --indigo: #eef2ff; }
@@ -36,14 +36,14 @@
 <body>
 <div class="wrapper">
     <div class="header-bar">
-        <div style="font-weight:700; font-size:16px;">📊 생산성 분석 통합 대시보드 v13.0</div>
+        <div style="font-weight:700; font-size:16px;">📊 생산성 분석 대시보드 v13.1 (실제 일별 데이터)</div>
         <div style="display:flex; gap:12px; align-items:center;">
             <div id="dbStatus" style="font-size:11px; font-weight:bold; color:#64748b;">DB 연결 대기 중...</div>
             <button class="btn btn-primary" onclick="saveToGitHub()">💾 설정 저장</button>
         </div>
     </div>
     <div class="token-setup">
-        🔑 <strong>GitHub Token 인증:</strong>
+        🔑 <strong>GitHub 인증:</strong>
         <input type="password" id="ghTokenInput" style="width:320px; padding:6px; border:1px solid #d4a017; border-radius:4px;" placeholder="ghp_... 토큰을 입력하세요">
         <button class="btn btn-primary" style="padding:6px 12px;" onclick="applyToken()">적용 및 로드</button>
         <span id="syncStatus" style="font-size:11px; font-weight:bold; margin-left:10px;"></span>
@@ -58,7 +58,7 @@
             </div>
         </div>
         <div class="column">
-            <h2>📊 분석 결과 (행 클릭 시 상세 분석)</h2>
+            <h2>📊 분석 결과 (행 클릭 시 상세 조회)</h2>
             <div style="margin-bottom:15px;">
                 <select id="factorySelector" style="padding:8px; border-radius:6px; border:1px solid var(--border);" onchange="runCalculation()">
                     <option value="Total">전체 합계 (Total)</option>
@@ -103,7 +103,6 @@
         } catch (e) { status.innerText = "❌ 인증 실패 (토큰 확인)"; status.style.color = "#ef4444"; }
     }
 
-    // 날짜 및 텍스트 정규화 유틸리티
     function clean(str) { return str ? str.toString().trim() : ""; }
     function normalizeDate(raw) {
         const pts = raw.replace(/[\.\/]/g, '-').split('-');
@@ -154,9 +153,7 @@
 
     async function loadConfig() {
         try {
-            const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`, { 
-                headers: { "Authorization": `token ${GITHUB_TOKEN}` } 
-            });
+            const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`, { headers: { "Authorization": `token ${GITHUB_TOKEN}` } });
             const data = await res.json(); currentSha = data.sha;
             const config = JSON.parse(decodeURIComponent(atob(data.content).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
             document.getElementById('processList').innerHTML = '';
@@ -176,7 +173,7 @@
             if(shaRes.ok) currentSha = (await shaRes.json()).sha;
             const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`, {
                 method: "PUT", headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ message: "Update v13.0", content: btoa(encodeURIComponent(JSON.stringify(config)).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))), sha: currentSha })
+                body: JSON.stringify({ message: "Update v13.1", content: btoa(encodeURIComponent(JSON.stringify(config)).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))), sha: currentSha })
             });
             if (res.ok) { currentSha = (await res.json()).content.sha; sync.innerText = "✅ 저장됨"; sync.style.color = "#10b981"; }
         } catch (e) { sync.innerText = "❌ 저장 실패"; sync.style.color = "#ef4444"; }
@@ -269,24 +266,25 @@
 
             for(let i=1; i<=daysInMonth; i++) {
                 const dKey = `${m}-${String(i).padStart(2, '0')}`, dt = new Date(m.split('-')[0], m.split('-')[1]-1, i);
-                const dData = mObj.days[dKey]; // 실제 일별 데이터가 있는지 확인
+                const dData = mObj.days[dKey]; // 실제 일별 데이터
                 
-                // [보완] 실제 데이터가 없으면 월 평균으로 보간하여 표시
-                const dispQty = dData ? dData.qty : avgDaily;
+                // 실제 데이터가 없으면 0으로 표시 (사용자 요청사항: 평균물량 사용 안함)
+                const actualQty = dData ? dData.qty : 0;
                 const wk = Math.ceil((((dt-new Date(dt.getFullYear(),0,1))/86400000)+new Date(dt.getFullYear(),0,1).getDay()+1)/7);
 
                 bHtml += `<tr class="day-row detail-${m} ${wk % 2 === 0 ? 'week-even' : ''}">
-                    <td style="text-align:right; color:#64748b;">└ ${i}일 (${['일','월','화','수','목','금','토'][dt.getDay()]})</td><td>-</td><td>${Math.round(dispQty).toLocaleString()}</td>`;
+                    <td style="text-align:right; color:#64748b;">└ ${i}일 (${['일','월','화','수','목','금','토'][dt.getDay()]})</td><td>-</td><td style="font-weight:700;">${actualQty.toLocaleString()}</td>`;
                 
                 let dTotalMan = 0;
                 procs.forEach(p => {
-                    let pDayQty = 0;
-                    p.targets.forEach(t => {
-                        if (dData) pDayQty += (t.type === 'cat' ? (dData.cats[t.name] || 0) : (dData.items[t.name] || 0));
-                        else pDayQty += (t.type === 'cat' ? (mObj.cats[t.name] || 0) : (mObj.items[t.name] || 0)) / daysInMonth;
-                    });
-                    const dman = (pDayQty * p.ratio * p.workTime) / avail;
-                    bHtml += `<td><span>${dman.toFixed(1)}명</span><br><span style="font-size:10px; color:#94a3b8;">(${Math.round(pDayQty * p.ratio)}건)</span></td>`;
+                    let pDayActualQty = 0;
+                    if (dData) {
+                        p.targets.forEach(t => {
+                            pDayActualQty += (t.type === 'cat' ? (dData.cats[t.name] || 0) : (dData.items[t.name] || 0));
+                        });
+                    }
+                    const dman = (pDayActualQty * p.ratio * p.workTime) / avail;
+                    bHtml += `<td><span>${dman.toFixed(1)}명</span><br><span style="font-size:10px; color:#94a3b8;">(${Math.round(pDayActualQty * p.ratio).toLocaleString()}건)</span></td>`;
                     dTotalMan += dman;
                 });
                 bHtml += `<td style="background:#f5f3ff;">${dTotalMan.toFixed(1)}명</td></tr>`;
