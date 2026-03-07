@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>생산성 통합 분석 시스템 v15.2</title>
+    <title>생산성 통합 분석 시스템 v15.3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
 
@@ -28,7 +28,6 @@
             overflow: hidden;
         }
 
-        /* 레이아웃 구조 */
         .wrapper { display: flex; flex-direction: column; height: 100vh; }
         
         .header-bar {
@@ -41,7 +40,7 @@
             border-bottom: 1px solid var(--border);
             box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             flex-shrink: 0;
-            z-index: 50;
+            z-index: 100; /* 상단 고정 바 우선순위 최상위 */
         }
 
         .header-title { font-size: 18px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
@@ -64,13 +63,13 @@
             overflow: hidden;
         }
 
-        .column { height: 100%; overflow-y: auto; padding: 32px; box-sizing: border-box; }
+        .column { height: 100%; overflow-y: auto; padding: 32px; box-sizing: border-box; position: relative; }
         .column-left { border-right: 1px solid var(--border); background: #fcfcfd; }
-        .column-right { background: var(--bg-card); }
+        .column-right { background: var(--bg-card); scroll-behavior: smooth; }
 
         h2 { font-size: 20px; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
 
-        /* 공정 박스 디자인 */
+        /* 공정 박스 */
         .process-box {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -81,75 +80,42 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .process-box:hover { border-color: var(--primary); box-shadow: var(--shadow); }
-
-        .proc-header {
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            background: #fff;
-        }
-
+        .proc-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; }
         .proc-info { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
         .proc-name-row { display: flex; align-items: center; gap: 12px; }
         .proc-meta-row { display: flex; gap: 16px; }
-
-        .proc-name-input {
-            font-size: 15px; font-weight: 700; border: 1px solid transparent;
-            padding: 4px 8px; border-radius: 4px; width: 220px; outline: none; background: transparent;
-        }
+        .proc-name-input { font-size: 15px; font-weight: 700; border: 1px solid transparent; padding: 4px 8px; border-radius: 4px; width: 220px; outline: none; background: transparent; }
         .proc-name-input:focus { border-color: var(--primary); background: #f5f3ff; }
 
-        .badge-input {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 12px; color: var(--text-muted);
-            background: #f8fafc; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
-        }
-        .badge-input input {
-            width: 45px; border: none; background: transparent; font-weight: 700; color: var(--primary); text-align: center; outline: none;
-        }
+        .badge-input { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); background: #f8fafc; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); }
+        .badge-input input { width: 45px; border: none; background: transparent; font-weight: 700; color: var(--primary); text-align: center; outline: none; }
 
-        .toggle-arrow {
-            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: var(--text-muted);
-        }
+        .toggle-arrow { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: var(--text-muted); }
         .process-box.active .toggle-arrow { transform: rotate(180deg); color: var(--primary); }
-
-        .proc-body {
-            display: none;
-            padding: 20px;
-            background: #fafafa;
-            border-top: 1px solid var(--border);
-        }
+        .proc-body { display: none; padding: 20px; background: #fafafa; border-top: 1px solid var(--border); }
         .process-box.active .proc-body { display: block; }
 
-        .btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-            border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
-            transition: all 0.2s; white-space: nowrap;
+        /* 테이블 및 고정 헤더 */
+        .table-container { border-radius: 12px; border: 1px solid var(--border); overflow: visible; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        
+        /* 타이틀 고정 핵심 CSS */
+        th { 
+            background: #f8fafc; 
+            padding: 16px 12px; 
+            font-weight: 600; 
+            color: var(--text-muted); 
+            text-align: center; 
+            border-bottom: 2px solid var(--border); 
+            position: sticky; 
+            top: -32px; /* column 패딩 보정 */
+            z-index: 20; 
+            transition: background 0.2s;
+            box-shadow: 0 1px 0 var(--border); /* 고정 시 하단 경계선 유지 */
         }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        .btn-ghost { background: #f1f5f9; color: var(--text-main); }
-        .btn-ghost:hover { background: #e2e8f0; }
-        .btn-outline-danger { background: transparent; border: 1px solid #fee2e2; color: var(--danger); }
-        .btn-outline-danger:hover { background: #fef2f2; border-color: var(--danger); }
-
-        /* 셀렉터 및 태그 */
-        .selector-container { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
-        .item-picker-wrapper { margin-top: 12px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-        .item-list-scroll { max-height: 200px; overflow-y: auto; padding: 8px; background: #fff; }
-        .item-picker-footer { padding: 8px; background: #f8fafc; border-top: 1px solid var(--border); }
-
-        /* 테이블 디자인 및 하이라이트 효과 */
-        .table-container { border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #f8fafc; padding: 16px 12px; font-weight: 600; color: var(--text-muted); text-align: center; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 10; transition: background 0.2s; }
+        
         td { padding: 14px 12px; text-align: center; border-bottom: 1px solid var(--border); transition: background 0.2s; }
         
-        /* 칼럼 하이라이트 스타일 */
         th.hover-active { background: #eef2ff !important; color: var(--primary) !important; cursor: pointer; }
         td.highlight-col { background: #f5f7ff !important; }
 
@@ -164,11 +130,16 @@
         .qty-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; display: block; }
         .total-col { background: #f5f3ff; font-weight: 700; color: var(--primary); }
 
-        .target-tag {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #fff; border: 1px solid var(--border); padding: 8px 12px;
-            border-radius: 6px; margin-bottom: 6px; font-size: 12px;
-        }
+        /* 기타 UI */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; white-space: nowrap; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-ghost { background: #f1f5f9; color: var(--text-main); }
+        .btn-outline-danger { background: transparent; border: 1px solid #fee2e2; color: var(--danger); }
+        .selector-container { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+        .item-picker-wrapper { margin-top: 12px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .item-list-scroll { max-height: 200px; overflow-y: auto; padding: 8px; background: #fff; }
+        .target-tag { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; }
         .tag-label-cat { color: var(--accent); font-weight: 700; margin-right: 6px; }
         .tag-label-item { color: var(--primary); font-weight: 700; margin-right: 6px; }
     </style>
@@ -177,16 +148,16 @@
 
 <div class="wrapper">
     <div class="header-bar">
-        <div class="header-title">📊 생산성 분석 통합 대시보드 v15.2</div>
+        <div class="header-title">📊 생산성 분석 통합 대시보드 v15.3</div>
         <div style="display:flex; align-items:center; gap:16px;">
-            <div id="dbStatus" class="header-status">DB 연결 대기 중...</div>
+            <div id="dbStatus" class="header-status">DB 상태 확인 중...</div>
             <span id="syncStatus" style="font-size:12px; color:var(--text-muted);"></span>
             <button class="btn btn-primary" style="padding: 8px 16px;" onclick="saveToGitHub()">💾 설정 저장</button>
         </div>
     </div>
 
     <div class="token-setup-bar">
-        🔑 <strong>GitHub Token:</strong>
+        🔑 <strong>GitHub Token 인증:</strong>
         <input type="password" id="ghTokenInput" style="width:300px; padding:4px 8px; border:1px solid #d4a017; border-radius:4px;" placeholder="ghp_...">
         <button class="btn btn-primary" style="padding:4px 12px; font-size:12px;" onclick="applyToken()">적용 및 로드</button>
     </div>
@@ -196,7 +167,6 @@
             <h2>🛠️ 공정 및 대상 설정</h2>
             <div id="processList"></div>
             <button class="btn btn-ghost" style="width:100%; padding:14px; margin-bottom:24px;" onclick="addNewProcess()">+ 새로운 공정 추가</button>
-            
             <div style="margin-top:auto; padding:15px; background:white; border-radius:12px; border:1px solid var(--border);">
                 <h3 style="font-size:14px; margin-top:0;">📅 기본 가동 환경</h3>
                 <div class="badge-input">일 근무시간 (h) <input type="number" id="cfgHours" value="8" oninput="runCalculation()"></div>
@@ -209,7 +179,7 @@
                 <select id="factorySelector" style="padding:10px 16px; border-radius:8px; border:1px solid var(--border); font-weight:600; outline:none;" onchange="runCalculation()">
                     <option value="Total">전체 합계 (Total)</option>
                 </select>
-                <div style="font-size:11px; color:var(--text-muted);">* 공정 이름을 마우스 오버하면 해당 칼럼이 하이라이트됩니다.</div>
+                <div style="font-size:11px; color:var(--text-muted);">* 스크롤 시에도 공정 타이틀이 상단에 고정됩니다.</div>
             </div>
 
             <div class="table-container">
@@ -254,7 +224,6 @@
     }
 
     function cleanKey(str) { return str ? str.toString().replace(/\s+/g, '').toUpperCase() : ""; }
-    
     function normalizeDate(raw) {
         if (!raw) return null;
         const pts = raw.toString().replace(/[^0-9]/g, '-').split('-').filter(p => p !== '');
@@ -266,21 +235,16 @@
     function parseCSV(csv) {
         const lines = csv.split(/\r?\n/), regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
         masterData = { hierarchy: {}, factories: { "Total": { months: {} } } };
-
         lines.slice(1).forEach(line => {
             if (!line.trim()) return;
             const cols = line.split(regex).map(c => c.replace(/^"|"$/g, '').trim());
-            // Index 0: 작업일
             const rawDate = cols[0], catRaw = cols[2], itemRaw = cols[3], fNameRaw = cols[4], qty = parseFloat(cols[5]) || 0;
             const dateObj = normalizeDate(rawDate);
             if (!dateObj || !catRaw || !itemRaw) return;
-
             const { month, full } = dateObj;
             const catKey = cleanKey(catRaw), itemKey = cleanKey(itemRaw), fName = fNameRaw || "Unknown";
-
             if (!masterData.hierarchy[catRaw]) masterData.hierarchy[catRaw] = new Set();
             masterData.hierarchy[catRaw].add(itemRaw);
-
             [ "Total", fName ].forEach(target => {
                 if (!masterData.factories[target]) masterData.factories[target] = { months: {} };
                 const f = masterData.factories[target].months;
@@ -297,7 +261,6 @@
                 }
             });
         });
-        
         const sel = document.getElementById('factorySelector');
         sel.innerHTML = '<option value="Total">전체 합계 (Total)</option>';
         Object.keys(masterData.factories).sort().forEach(f => { if(f !== "Total" && f !== "Unknown") sel.innerHTML += `<option value="${f}">${f}</option>`; });
@@ -327,13 +290,12 @@
             if(shaRes.ok) currentSha = (await shaRes.json()).sha;
             const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${DATA_FILE}`, {
                 method: "PUT", headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ message: "Update v15.2", content: btoa(encodeURIComponent(JSON.stringify(config)).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))), sha: currentSha })
+                body: JSON.stringify({ message: "Update v15.3", content: btoa(encodeURIComponent(JSON.stringify(config)).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))), sha: currentSha })
             });
             if (res.ok) { currentSha = (await res.json()).content.sha; sync.innerText = "✅ 저장됨"; }
         } catch (e) { sync.innerText = "❌ 실패"; }
     }
 
-    // 칼럼 하이라이트 토글 함수
     function toggleColHighlight(colIndex, isActivate) {
         const table = document.getElementById('resultTable');
         const rows = table.rows;
@@ -344,7 +306,6 @@
                 else cell.classList.remove('highlight-col');
             }
         }
-        // 헤더 자체 효과
         const headerCell = table.tHead.rows[0].cells[colIndex];
         if (isActivate) headerCell.classList.add('hover-active');
         else headerCell.classList.remove('hover-active');
@@ -355,7 +316,6 @@
         div.className = 'process-box';
         let catOpts = `<option value="">대분류 선택</option>`;
         Object.keys(masterData.hierarchy).sort().forEach(cat => catOpts += `<option value="${cat}">${cat}</option>`);
-        
         div.innerHTML = `
             <div class="proc-header" onclick="this.closest('.process-box').classList.toggle('active')">
                 <div class="proc-info">
@@ -424,18 +384,14 @@
         const h = parseFloat(document.getElementById('cfgHours').value) || 8, avail = h * 3600;
         const fKey = document.getElementById('factorySelector').value, fData = masterData.factories[fKey];
         if(!fData) return;
-
         const procs = Array.from(document.querySelectorAll('.process-box')).map(box => ({
-            name: box.querySelector('.proc-name-input').value, 
-            ratio: (parseFloat(box.querySelector('.proc-ratio').value) || 0) / 100,
-            workTime: parseFloat(box.querySelector('.proc-time').value) || 0, 
-            targets: Array.from(box.querySelectorAll('.target-row')).map(r => ({ name: r.dataset.name, type: r.dataset.type }))
+            name: box.querySelector('.proc-name-input').value, ratio: (parseFloat(box.querySelector('.proc-ratio').value) || 0) / 100,
+            workTime: parseFloat(box.querySelector('.proc-time').value) || 0, targets: Array.from(box.querySelectorAll('.target-row')).map(r => ({ name: r.dataset.name, type: r.dataset.type }))
         }));
 
-        // 헤더 생성 (이벤트 추가)
         let hHtml = `<tr><th>구분</th><th>총 물량</th><th>일평균 물량</th>`;
         procs.forEach((p, idx) => {
-            const colIdx = idx + 3; // '구분, 총물량, 일평균' 다음 칼럼부터
+            const colIdx = idx + 3;
             hHtml += `<th onmouseenter="toggleColHighlight(${colIdx}, true)" onmouseleave="toggleColHighlight(${colIdx}, false)">${p.name}</th>`;
         });
         document.getElementById('tableHead').innerHTML = hHtml + `<th class="total-col">총 인원</th></tr>`;
@@ -444,10 +400,8 @@
         Object.keys(fData.months).sort().forEach(m => {
             const mObj = fData.months[m], daysInMonth = new Date(m.split('-')[0], m.split('-')[1], 0).getDate();
             const avgDailyTotal = mObj.qty / daysInMonth;
-
             bHtml += `<tr class="month-row" onclick="document.querySelectorAll('.detail-${m}').forEach(d=>d.classList.toggle('visible'))">
                 <td style="text-align:left">📂 ${m}</td><td>${Math.round(mObj.qty).toLocaleString()}</td><td style="color:var(--primary); font-weight:700;">${Math.round(avgDailyTotal).toLocaleString()}</td>`;
-            
             let mTotalMan = 0;
             procs.forEach(p => {
                 let pMonthTargetQty = 0;
@@ -462,10 +416,8 @@
                 const dKey = `${m}-${String(i).padStart(2, '0')}`, dt = new Date(m.split('-')[0], m.split('-')[1]-1, i);
                 const dData = mObj.days[dKey], actualDayQty = dData ? dData.qty : 0;
                 const wkNum = Math.ceil((((dt-new Date(dt.getFullYear(),0,1))/86400000)+new Date(dt.getFullYear(),0,1).getDay()+1)/7);
-
                 bHtml += `<tr class="day-row detail-${m} ${wkNum % 2 === 0 ? 'week-even' : ''}">
                     <td style="text-align:right">└ ${i}일 (${['일','월','화','수','목','금','토'][dt.getDay()]})</td><td>-</td><td style="font-weight:700;">${Math.round(actualDayQty).toLocaleString()}</td>`;
-                
                 let dTotalMan = 0;
                 procs.forEach(p => {
                     let pDayActualQty = 0;
