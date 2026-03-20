@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ko" class="theme-dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QC 합산 대시보드 — 2026.03.17 + 03.19</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script>if (typeof Chart !== 'undefined') { Chart.defaults.animation = false; }</script>
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { interpolate-size: allow-keywords; }
+
+    html.theme-dark {
+      --bg: #0C0C0E; --surface: #15151A; --surface-hover: #1E1E26;
+      --border: rgba(255,255,255,0.07);
+      --text: #EDEDED; --text-secondary: #8A8A9A;
+      --accent: #4F8EF7; --accent-secondary: #9B6EF3;
+      --positive: #22C87A; --negative: #F5475A; --warning: #F5A623;
+    }
+    html.theme-light {
+      --bg: #F2F4F8; --surface: #FFFFFF; --surface-hover: #ECEEF5;
+      --border: rgba(0,0,0,0.08);
+      --text: #0D1117; --text-secondary: #5A6476;
+      --accent: #1E6FE8; --accent-secondary: #7B3CE8;
+      --positive: #0B8C54; --negative: #D62B3D; --warning: #B87800;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', 'Inter', -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.65; -webkit-font-smoothing: antialiased;
+      transition: background 0.3s, color 0.3s;
+      scrollbar-gutter: stable;
+    }
+    h1,h2,h3,h4 { font-family: 'Noto Sans KR', sans-serif; color: var(--text); letter-spacing: -0.02em; line-height: 1.15; }
+    h1 { font-size: 2.8rem; font-weight: 800; }
+    h2 { font-size: 2rem; font-weight: 700; }
+    h3 { font-size: 1.5rem; font-weight: 600; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 28px; }
+
+    /* HERO */
+    .hero { padding: 56px 0 36px; border-bottom: 1px solid var(--border); margin-bottom: 52px; }
+    .hero-eye { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .hero-eye::before { content: ''; display: inline-block; width: 20px; height: 2px; background: var(--accent); }
+    .hero h1 { margin-bottom: 10px; }
+    .hero-sub { color: var(--text-secondary); font-size: 1rem; }
+    .hero-dates { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .date-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); }
+    .date-chip .dot { width: 7px; height: 7px; border-radius: 50%; }
+
+    /* SECTION */
+    section { margin-bottom: 60px; }
+    .sec-label { font-size: 0.73rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+    .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .sec-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+    .sec-desc { color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 24px; line-height: 1.6; }
+
+    /* KPI */
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 52px; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 18px 20px; position: relative; overflow: hidden; transition: box-shadow 0.2s; }
+    .kpi:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.12); }
+    .kpi::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 14px 14px 0 0; }
+    .kpi.bl::after { background: var(--accent); }
+    .kpi.gr::after { background: var(--positive); }
+    .kpi.or::after { background: var(--warning); }
+    .kpi.pu::after { background: var(--accent-secondary); }
+    .kpi.re::after { background: var(--negative); }
+    .kpi-lbl { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 9px; }
+    .kpi-num { font-size: 2.2rem; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 5px; }
+    .kpi-sub { font-size: 0.78rem; color: var(--text-secondary); }
+    .kpi-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-top: 9px; }
+    .tg { background: rgba(34,200,122,0.12); color: var(--positive); }
+    .tr { background: rgba(245,71,90,0.12); color: var(--negative); }
+    .to { background: rgba(245,166,35,0.12); color: var(--warning); }
+    .tb { background: rgba(79,142,247,0.12); color: var(--accent); }
+
+    /* CARD & CHART CARD */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; transition: box-shadow 0.2s; }
+    .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; transition: box-shadow 0.2s; }
+    .chart-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .cht-ttl { font-size: 1rem; font-weight: 700; margin-bottom: 3px; }
+    .cht-sub { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 18px; }
+
+    /* GRIDS */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .g4c { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+    /* DATE COMPARE CARDS */
+    .day-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+    .day-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 20px; transition: box-shadow 0.2s; }
+    .day-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .day-card.combined { border-color: rgba(79,142,247,0.3); background: rgba(79,142,247,0.04); }
+    .day-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .day-name { font-size: 0.88rem; font-weight: 700; }
+    .day-big { font-size: 2.4rem; font-weight: 800; line-height: 1; margin-bottom: 5px; }
+    .day-sub { font-size: 0.78rem; color: var(--text-secondary); }
+    .day-bar { height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 14px; }
+    .day-bar-fill { height: 100%; border-radius: 4px; }
+    .day-stats { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+    .day-stat { font-size: 0.78rem; color: var(--text-secondary); }
+    .day-stat strong { color: var(--text); font-weight: 600; }
+
+    /* BAR COMPARE */
+    .bar-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+    .bar-row:last-child { border-bottom: none; }
+    .bar-lbl { font-size: 0.85rem; font-weight: 600; min-width: 96px; }
+    .bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; }
+    .bar-val { font-size: 0.85rem; font-weight: 700; min-width: 52px; text-align: right; }
+    .bar-cnt { font-size: 0.75rem; color: var(--text-secondary); min-width: 56px; text-align: right; }
+
+    /* STAIN CARDS */
+    .stain-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+    .stain-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; transition: box-shadow 0.2s; }
+    .stain-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .stain-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .stain-rate { font-size: 3rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .stain-lbl { font-size: 0.78rem; color: var(--text-secondary); }
+    .stain-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 14px; }
+    .stain-fill { height: 100%; border-radius: 4px; }
+    .stain-detail { font-size: 0.77rem; color: var(--text-secondary); margin-top: 7px; }
+
+    /* CROSS CARDS */
+    .cross-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+    .cross-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: box-shadow 0.2s; }
+    .cross-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.1); }
+    .cross-card.danger { border-color: rgba(245,71,90,0.3); background: rgba(245,71,90,0.04); }
+    .cross-ttl { font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; }
+    .cross-big { font-size: 1.8rem; font-weight: 800; line-height: 1; margin-bottom: 3px; }
+    .cross-sm { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* INSIGHT */
+    .insight { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+    .i-ico { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+    .i-txt { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.65; }
+    .i-txt strong { color: var(--text); font-weight: 600; }
+    .insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* BADGE */
+    .badge { display: inline-flex; align-items: center; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .bd-g { background: rgba(34,200,122,0.12); color: var(--positive); }
+    .bd-r { background: rgba(245,71,90,0.12); color: var(--negative); }
+    .bd-o { background: rgba(245,166,35,0.12); color: var(--warning); }
+    .bd-b { background: rgba(79,142,247,0.12); color: var(--accent); }
+
+    /* MINI RATE */
+    .mini-rate { display: flex; align-items: center; gap: 8px; }
+    .mini-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; min-width: 48px; }
+    .mini-fill { height: 100%; border-radius: 3px; }
+    .mini-val { font-size: 0.8rem; font-weight: 700; min-width: 42px; text-align: right; }
+
+    /* TABLE */
+    .tbl-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+    thead th { background: var(--surface-hover); padding: 11px 15px; font-size: 0.71rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-secondary); text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-hover); }
+    tbody td { padding: 10px 15px; color: var(--text); }
+    .td-r { text-align: right; }
+    .td-c { text-align: center; }
+
+    /* FILTER TABS */
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .tab { padding: 6px 16px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; font-family: inherit; transition: all 0.18s; }
+    .tab:hover { border-color: var(--accent); color: var(--accent); }
+    .tab.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ANIMATIONS */
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    .animate { animation: fadeInUp 0.5s ease-out both; }
+    .animate.d1 { animation-delay: 0.07s; } .animate.d2 { animation-delay: 0.14s; }
+    .animate.d3 { animation-delay: 0.21s; } .animate.d4 { animation-delay: 0.28s; }
+    .animate.d5 { animation-delay: 0.35s; }
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.5s ease, transform 0.5s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .reveal { opacity: 1; transform: none; } }
+
+    /* RESPONSIVE */
+    @media (max-width: 1050px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 860px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } .g2, .day-grid { grid-template-columns: 1fr; } .stain-pair { grid-template-columns: 1fr; } .cross-grid { grid-template-columns: repeat(2, 1fr); } .insight-grid { grid-template-columns: 1fr; } h1 { font-size: 2rem; } h2 { font-size: 1.6rem; } }
+    @media (max-width: 560px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } .g3 { grid-template-columns: 1fr; } .container { padding: 0 16px; } }
+    @media (max-width: 375px) { body { overflow-x: hidden; } .kpi-grid { grid-template-columns: 1fr 1fr; } .kpi-num { font-size: 1.8rem; } }
+
+    /* PRINT */
+    @media print {
+      body { background: #fff !important; color: #000 !important; }
+      .viz-menu { display: none !important; }
+      .card, .chart-card, .kpi, .stain-card, .day-card { break-inside: avoid; border: 1px solid #ddd !important; box-shadow: none !important; }
+      * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    }
+    @page { margin: 0.75in; }
+
+    /* MENU */
+    .viz-menu { position: fixed; top: 16px; right: 16px; z-index: 9999; }
+    .viz-menu-toggle { width: 44px; height: 44px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(12px); transition: all 0.2s; }
+    .viz-menu-toggle:hover { background: var(--surface-hover); }
+    .viz-menu-dropdown { position: absolute; top: 52px; right: 0; min-width: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.2s; backdrop-filter: blur(16px); box-shadow: 0 8px 28px rgba(0,0,0,0.18); }
+    .viz-menu-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
+    .viz-menu-dropdown button { width: 100%; padding: 10px 14px; border: none; border-radius: 8px; background: transparent; color: var(--text); font-size: 14px; font-family: inherit; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px; transition: background 0.15s; }
+    .viz-menu-dropdown button:hover { background: var(--surface-hover); }
+
+    .footer { padding: 28px 0 52px; border-top: 1px solid var(--border); }
+    .footer p { font-size: 0.78rem; color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+  <a href="#main-content" style="position:absolute;left:-9999px;z-index:10000;padding:8px 16px;background:var(--accent);color:#fff;text-decoration:none;border-radius:4px;" onfocus="this.style.cssText='position:fixed;left:16px;top:16px;z-index:10000;padding:8px 16px;background:var(--accent);color:#fff;text-decoration:none;border-radius:4px;'" onblur="this.style.cssText='position:absolute;left:-9999px;'">본문 바로가기</a>
+
+  <div class="viz-menu" role="navigation" aria-label="도구 메뉴">
+    <button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="메뉴">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/>
+      </svg>
+    </button>
+    <div class="viz-menu-dropdown" id="vizMenuDropdown">
+      <button onclick="cycleTheme()"><span id="themeIcon">🌙</span><span id="themeLabel">다크 모드</span></button>
+      <button onclick="downloadImage()"><span>📥</span><span>PNG 다운로드</span></button>
+      <button onclick="window.print()"><span>🖨️</span><span>인쇄 / PDF</span></button>
+    </div>
+  </div>
+
+  <main id="main-content" role="main">
+    <div class="container">
+
+      <!-- HERO -->
+      <header class="hero" role="banner">
+        <div class="hero-eye animate">QC 합산 분석 리포트</div>
+        <h1 class="animate d1">QC 대시보드 — 2일 합산</h1>
+        <p class="hero-sub animate d2">세탁방법 · 얼룩체크 여부 · 품목별 종합 분석 | 2차 부적합 0건</p>
+        <div class="hero-dates animate d3">
+          <div class="date-chip"><div class="dot" style="background:var(--accent);"></div> 2026-03-17 · 670건</div>
+          <div class="date-chip"><div class="dot" style="background:var(--accent-secondary);"></div> 2026-03-19 · 1,909건</div>
+          <div class="date-chip"><div class="dot" style="background:var(--positive);"></div> 합산 총 2,579건</div>
+        </div>
+      </header>
+
+      <!-- ① KPI -->
+      <section aria-label="핵심 지표">
+        <div class="sec-label">핵심 성과 지표 (2일 합산)</div>
+        <div class="kpi-grid">
+          <div class="kpi bl animate d1">
+            <div class="kpi-lbl">합산 총 처리량</div>
+            <div class="kpi-num" data-count="2579">0</div>
+            <div class="kpi-sub">17일 670 + 19일 1,909</div>
+            <div class="kpi-tag tg">2차 부적합 0건</div>
+          </div>
+          <div class="kpi gr animate d2">
+            <div class="kpi-lbl">합산 합격률</div>
+            <div class="kpi-num"><span data-count="84" data-suffix=".7%">0</span></div>
+            <div class="kpi-sub">합격 2,185건 / 2,579건</div>
+            <div class="kpi-tag tr">부적합 394건 (15.3%)</div>
+          </div>
+          <div class="kpi or animate d3">
+            <div class="kpi-lbl">03-17 합격률</div>
+            <div class="kpi-num"><span data-count="87" data-suffix=".2%">0</span></div>
+            <div class="kpi-sub">합격 584 / 670건</div>
+            <div class="kpi-tag tg">부적합 86건 (12.8%)</div>
+          </div>
+          <div class="kpi pu animate d4">
+            <div class="kpi-lbl">03-19 합격률</div>
+            <div class="kpi-num"><span data-count="83" data-suffix=".9%">0</span></div>
+            <div class="kpi-sub">합격 1,601 / 1,909건</div>
+            <div class="kpi-tag tr">부적합 308건 (16.1%)</div>
+          </div>
+          <div class="kpi re animate d5">
+            <div class="kpi-lbl">부적합 증가</div>
+            <div class="kpi-num" style="font-size:1.8rem;">+3.3%p</div>
+            <div class="kpi-sub">17일→19일 부적합율 차이</div>
+            <div class="kpi-tag tr">12.8% → 16.1%</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ② 일자별 비교 -->
+      <section aria-label="일자별 비교" data-reveal>
+        <div class="sec-label">일자별 비교</div>
+        <h2 class="sec-title">03.17 vs 03.19</h2>
+        <p class="sec-desc">이틀 간 처리량 및 품질 지표 비교. 19일 물량이 약 2.85배 많으며, 부적합율도 상승.</p>
+        <div class="day-grid">
+          <div class="day-card">
+            <div class="day-head">
+              <div class="day-name">2026-03-17</div>
+              <span class="badge bd-g">합격율 높음</span>
+            </div>
+            <div class="day-big" style="color:var(--accent);" data-count="670">0</div>
+            <div class="day-sub">총 처리 건수</div>
+            <div class="day-bar"><div class="day-bar-fill" style="width:25.98%; background:var(--accent);"></div></div>
+            <div class="day-stats">
+              <div class="day-stat">합격 <strong>584건</strong></div>
+              <div class="day-stat">부적합 <strong>86건</strong></div>
+              <div class="day-stat">부적합율 <strong>12.8%</strong></div>
+              <div class="day-stat">웨트 <strong>293건</strong></div>
+              <div class="day-stat">드라이 <strong>377건</strong></div>
+            </div>
+          </div>
+          <div class="day-card">
+            <div class="day-head">
+              <div class="day-name">2026-03-19</div>
+              <span class="badge bd-o">부적합율↑</span>
+            </div>
+            <div class="day-big" style="color:var(--accent-secondary);" data-count="1909">0</div>
+            <div class="day-sub">총 처리 건수 (17일 대비 ×2.85)</div>
+            <div class="day-bar"><div class="day-bar-fill" style="width:74.02%; background:var(--accent-secondary);"></div></div>
+            <div class="day-stats">
+              <div class="day-stat">합격 <strong>1,601건</strong></div>
+              <div class="day-stat">부적합 <strong>308건</strong></div>
+              <div class="day-stat">부적합율 <strong>16.1%</strong></div>
+              <div class="day-stat">웨트 <strong>828건</strong></div>
+              <div class="day-stat">드라이 <strong>1,081건</strong></div>
+            </div>
+          </div>
+          <div class="day-card combined">
+            <div class="day-head">
+              <div class="day-name">2일 합산</div>
+              <span class="badge bd-b">전체</span>
+            </div>
+            <div class="day-big" style="color:var(--positive);">2,579</div>
+            <div class="day-sub">총 처리 건수</div>
+            <div class="day-bar"><div class="day-bar-fill" style="width:100%; background:var(--positive);"></div></div>
+            <div class="day-stats">
+              <div class="day-stat">합격 <strong>2,185건</strong></div>
+              <div class="day-stat">부적합 <strong>394건</strong></div>
+              <div class="day-stat">합격율 <strong>84.7%</strong></div>
+              <div class="day-stat">웨트 <strong>1,121건</strong></div>
+              <div class="day-stat">드라이 <strong>1,458건</strong></div>
+            </div>
+          </div>
+        </div>
+        <div role="img" aria-label="일자별 합격 부적합 비교 차트">
+          <div class="chart-card">
+            <div class="cht-ttl">일자별 합격 / 부적합 비교</div>
+            <div class="cht-sub">03.17 · 03.19 · 합산</div>
+            <div style="height:260px; position:relative;">
+              <canvas id="dayChart" role="img" aria-label="일자별 합격 부적합 그룹 바 차트"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ③ 세탁방법 -->
+      <section aria-label="세탁방법별 분석" data-reveal>
+        <div class="sec-label">세탁방법별 분석</div>
+        <h2 class="sec-title">웨트 vs 드라이 — 2일 합산</h2>
+        <p class="sec-desc">2일 합산 기준 세탁방법별 처리 현황 및 부적합율 비교. 웨트·드라이 격차가 0.36%p로 전일 대비 줄어듦.</p>
+        <div class="g2">
+          <div role="img" aria-label="세탁방법별 합격/부적합 누적 바 차트">
+            <div class="chart-card">
+              <div class="cht-ttl">세탁방법별 합격 / 부적합 (합산)</div>
+              <div class="cht-sub">1차 적합 + 1차 부적합 누적</div>
+              <div style="height:240px; position:relative;">
+                <canvas id="washChart" role="img" aria-label="세탁방법별 누적 바 차트"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-size:0.88rem; font-weight:700; margin-bottom:16px;">부적합율 비교 (2일 합산)</div>
+            <div style="margin-bottom:22px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:7px;">
+                <span style="font-size:0.9rem; font-weight:700;">웨트 (Wet)</span>
+                <span class="badge bd-o">15.07%</span>
+              </div>
+              <div style="height:10px; background:var(--border); border-radius:5px; overflow:hidden;">
+                <div style="height:100%; width:15.07%; background:var(--warning); border-radius:5px;"></div>
+              </div>
+              <div style="font-size:0.76rem; color:var(--text-secondary); margin-top:5px;">1,121건 처리 · 합격 952건 · 부적합 169건</div>
+            </div>
+            <div style="margin-bottom:22px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:7px;">
+                <span style="font-size:0.9rem; font-weight:700;">드라이 (Dry)</span>
+                <span class="badge bd-o">15.43%</span>
+              </div>
+              <div style="height:10px; background:var(--border); border-radius:5px; overflow:hidden;">
+                <div style="height:100%; width:15.43%; background:var(--negative); border-radius:5px;"></div>
+              </div>
+              <div style="font-size:0.76rem; color:var(--text-secondary); margin-top:5px;">1,458건 처리 · 합격 1,233건 · 부적합 225건</div>
+            </div>
+            <div class="insight">
+              <div class="i-ico">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div class="i-txt">2일 합산 시 웨트·드라이 부적합율 격차 <strong>0.36%p</strong>로 매우 근소. (17일: 2.8%p 차이) 세탁방법보다 <strong>얼룩 여부</strong>가 더 큰 영향 요인임.</div>
+            </div>
+          </div>
+        </div>
+        <!-- Day x Method chart -->
+        <div role="img" aria-label="일자별·세탁방법별 부적합율 비교 차트" style="margin-top:18px;">
+          <div class="chart-card">
+            <div class="cht-ttl">일자별 · 세탁방법별 부적합율 비교</div>
+            <div class="cht-sub">17일 / 19일 / 합산 × 웨트/드라이</div>
+            <div style="height:240px; position:relative;">
+              <canvas id="washDayChart" role="img" aria-label="일자별 세탁방법별 부적합율 그룹 바 차트"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ④ 얼룩체크 -->
+      <section aria-label="얼룩체크 분석" data-reveal>
+        <div class="sec-label">얼룩체크 여부 분석</div>
+        <h2 class="sec-title">세탁 전 얼룩 확인 영향 — 2일 합산</h2>
+        <p class="sec-desc">얼룩 있음(Y)의 부적합율이 없음(N) 대비 2.44배. 교차 분석에서 드라이+Y가 최고 위험군.</p>
+        <div class="stain-pair">
+          <div class="stain-card">
+            <div class="stain-head">
+              <div style="font-size:0.95rem; font-weight:700;">얼룩 없음 (N)</div>
+              <span class="badge bd-g">낮은 위험</span>
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:12px;">2,121건 처리 · 전체의 82.2%</div>
+            <div class="stain-rate" style="color:var(--positive);">12.2%</div>
+            <div class="stain-lbl">1차 부적합율 — 258건 / 2,121건</div>
+            <div class="stain-bar"><div class="stain-fill" style="width:12.16%; background:var(--positive);"></div></div>
+            <div class="stain-detail">웨트+N 800건(부적합 77건) · 드라이+N 1,321건(부적합 181건)</div>
+          </div>
+          <div class="stain-card">
+            <div class="stain-head">
+              <div style="font-size:0.95rem; font-weight:700;">얼룩 있음 (Y)</div>
+              <span class="badge bd-r">높은 위험</span>
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:12px;">458건 처리 · 전체의 17.8%</div>
+            <div class="stain-rate" style="color:var(--negative);">29.7%</div>
+            <div class="stain-lbl">1차 부적합율 — 136건 / 458건</div>
+            <div class="stain-bar"><div class="stain-fill" style="width:29.69%; background:var(--negative);"></div></div>
+            <div class="stain-detail">웨트+Y 321건(부적합 92건) · 드라이+Y 137건(부적합 44건)</div>
+          </div>
+        </div>
+
+        <!-- Cross chart -->
+        <div role="img" aria-label="교차 분석 그룹 바 차트" style="margin-bottom:16px;">
+          <div class="chart-card">
+            <div class="cht-ttl">세탁방법 × 얼룩 여부 교차 분석 (4가지 조합)</div>
+            <div class="cht-sub">합격 · 부적합 건수 / 부적합율 — 2일 합산</div>
+            <div style="height:260px; position:relative;">
+              <canvas id="crossChart" role="img" aria-label="4개 조합 교차 분석 차트"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="cross-grid">
+          <div class="cross-card">
+            <div class="cross-ttl">웨트 + 얼룩 없음(N)</div>
+            <div class="cross-big" style="color:var(--positive);">9.6%</div>
+            <div class="cross-sm">800건 · 부적합 77건</div>
+          </div>
+          <div class="cross-card">
+            <div class="cross-ttl">웨트 + 얼룩 있음(Y)</div>
+            <div class="cross-big" style="color:var(--negative);">28.7%</div>
+            <div class="cross-sm">321건 · 부적합 92건</div>
+          </div>
+          <div class="cross-card">
+            <div class="cross-ttl">드라이 + 얼룩 없음(N)</div>
+            <div class="cross-big" style="color:var(--warning);">13.7%</div>
+            <div class="cross-sm">1,321건 · 부적합 181건</div>
+          </div>
+          <div class="cross-card danger">
+            <div class="cross-ttl">⚠️ 드라이 + 얼룩 있음(Y)</div>
+            <div class="cross-big" style="color:var(--negative);">32.1%</div>
+            <div class="cross-sm">137건 · 부적합 <strong>44건</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ⑤ 품목별 -->
+      <section aria-label="품목별 분석" data-reveal>
+        <div class="sec-label">품목별 분석</div>
+        <h2 class="sec-title">품목 카테고리별 QC 현황 — 2일 합산</h2>
+        <p class="sec-desc">세탁방법별 세부 행 기준 총 47개 행 (29개 품목 카테고리 × 세탁방법 조합). 합산 총 2,579건.</p>
+
+        <div class="tabs">
+          <button class="tab on" onclick="filterTbl('all',this)">전체</button>
+          <button class="tab" onclick="filterTbl('high',this)">부적합율 15% 이상</button>
+          <button class="tab" onclick="filterTbl('vol',this)">수량 50건 이상</button>
+          <button class="tab" onclick="filterTbl('zero',this)">부적합 0건</button>
+          <button class="tab" onclick="filterTbl('wet',this)">웨트만</button>
+          <button class="tab" onclick="filterTbl('dry',this)">드라이만</button>
+        </div>
+
+        <div class="g2" style="margin-bottom:18px;">
+          <div role="img" aria-label="품목별 처리량 Top 12 차트">
+            <div class="chart-card">
+              <div class="cht-ttl">품목별 처리량 (Top 12)</div>
+              <div class="cht-sub">품목명 합산 기준</div>
+              <div style="height:380px; position:relative;">
+                <canvas id="catVolChart" role="img" aria-label="품목별 처리량 수평 바 차트"></canvas>
+              </div>
+            </div>
+          </div>
+          <div role="img" aria-label="품목별 부적합율 차트">
+            <div class="chart-card">
+              <div class="cht-ttl">품목별 1차 부적합율</div>
+              <div class="cht-sub">10건 이상 품목 · 내림차순</div>
+              <div style="height:380px; position:relative;">
+                <canvas id="catRejChart" role="img" aria-label="품목별 부적합율 수평 바 차트"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>품목 카테고리</th>
+                <th>세탁방법</th>
+                <th class="td-r">수량</th>
+                <th class="td-r">1차 부적합</th>
+                <th>부적합율</th>
+                <th class="td-c">상태</th>
+              </tr>
+            </thead>
+            <tbody id="tblBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ⑥ 인사이트 -->
+      <section aria-label="종합 인사이트" data-reveal>
+        <div class="sec-label">종합 인사이트</div>
+        <h2 class="sec-title">2일 합산 QC 요약</h2>
+        <div class="insight-grid">
+          <div class="insight">
+            <div class="i-ico">📈</div>
+            <div class="i-txt"><strong>19일 물량 2.85배 증가</strong>, 부적합율도 12.8% → 16.1%로 <strong>+3.3%p 악화</strong>. 물량 증가 시 품질 관리 강화 필요.</div>
+          </div>
+          <div class="insight">
+            <div class="i-ico">✅</div>
+            <div class="i-txt"><strong>2차 부적합 0건</strong> (양일 모두). 1차 부적합 394건 전원 재검 통과. 재검 프로세스 정상 작동.</div>
+          </div>
+          <div class="insight">
+            <div class="i-ico">🚨</div>
+            <div class="i-txt"><strong>얼룩Y</strong> 부적합율 29.7% vs <strong>얼룩N</strong> 12.2% — <strong>2.44배 차이</strong>. 얼룩 확인 여부가 세탁방법보다 부적합율에 훨씬 큰 영향.</div>
+          </div>
+          <div class="insight">
+            <div class="i-ico">⚠️</div>
+            <div class="i-txt"><strong>드라이+얼룩Y</strong> 조합 32.1%로 최고 위험. 후드티/맨투맨 웨트(29.4%), 에코백/토트백 웨트(100%), 장갑 드라이(50%) 주의.</div>
+          </div>
+          <div class="insight">
+            <div class="i-ico">👕</div>
+            <div class="i-txt"><strong>바지</strong>(689건, 19.9%)와 <strong>후드티/맨투맨</strong>(152건, 27.0%)이 볼륨·부적합율 모두 높은 이중 위험 품목. 우선 개선 대상.</div>
+          </div>
+          <div class="insight">
+            <div class="i-ico">💡</div>
+            <div class="i-txt"><strong>바지(689건) + 니트/스웨터(409건)</strong>가 전체의 42.2% 차지. 이 2종 품질 개선 시 전체 부적합율 유의미하게 개선 가능.</div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /container -->
+    <div class="container">
+      <div class="footer">
+        <p>03.17: 670건 · 합격율 87.2% &nbsp;|&nbsp; 03.19: 1,909건 · 합격율 83.9% &nbsp;|&nbsp; 합산: 2,579건 · 합격율 84.7% · 2차 부적합 0건 &nbsp;|&nbsp; 자동 생성 리포트</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ===== MENU =====
+    function toggleMenu() { var d = document.getElementById('vizMenuDropdown'); if (d) d.classList.toggle('open'); }
+    document.addEventListener('click', function(e) { if (!e.target.closest('.viz-menu')) { var d = document.getElementById('vizMenuDropdown'); if (d) d.classList.remove('open'); } });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { var d = document.getElementById('vizMenuDropdown'); if (d) d.classList.remove('open'); } });
+
+    // ===== THEME =====
+    var currentTheme = localStorage.getItem('viz-theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    function applyTheme(t) {
+      document.documentElement.className = 'theme-' + t;
+      document.getElementById('themeIcon').textContent = t === 'dark' ? '🌙' : '☀️';
+      document.getElementById('themeLabel').textContent = t === 'dark' ? '다크 모드' : '라이트 모드';
+      localStorage.setItem('viz-theme', t);
+      currentTheme = t;
+      if (typeof onThemeChange === 'function') onThemeChange();
+    }
+    function cycleTheme() { applyTheme(currentTheme === 'dark' ? 'light' : 'dark'); }
+    applyTheme(currentTheme);
+
+    // ===== SCROLL REVEAL =====
+    document.querySelectorAll('[data-reveal]').forEach(function(el) { el.classList.add('reveal'); });
+    var revObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('visible'); revObs.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.reveal').forEach(function(el) { revObs.observe(el); });
+
+    // ===== NUMBER COUNTER =====
+    function animateCounters() {
+      document.querySelectorAll('[data-count]').forEach(function(el) {
+        if (el.dataset.counted) return;
+        el.dataset.counted = '1';
+        var tgt = parseFloat(el.dataset.count), sfx = el.dataset.suffix || '';
+        var t0 = performance.now(), dur = 1100;
+        (function tick(now) {
+          var p = Math.min((now - t0) / dur, 1), e2 = 1 - Math.pow(1 - p, 3);
+          el.textContent = Math.round(tgt * e2).toLocaleString() + sfx;
+          if (p < 1) requestAnimationFrame(tick);
+        })(t0);
+      });
+    }
+    var cEl = document.querySelector('[data-count]');
+    if (cEl) {
+      var cObs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) { if (e.isIntersecting) { animateCounters(); cObs.disconnect(); } });
+      }, { threshold: 0.3 });
+      cObs.observe(cEl);
+    }
+
+    // ===== DATA =====
+    // 검증된 합산 수치
+    // 총 2579건 | 적합 2185 | 부적합 394 | 합격율 84.72%
+    // 웨트: 1121건(부적합169, 15.07%), 드라이: 1458건(부적합225, 15.43%)
+    // 얼룩N: 2121건(부적합258, 12.16%), 얼룩Y: 458건(부적합136, 29.69%)
+    // 교차: 웨트N 9.63%, 웨트Y 28.66%, 드라이N 13.70%, 드라이Y 32.12%
+
+    // 품목별 세부 데이터 (이미지 기준 47행)
+    var itemRows = [
+      { n:'바지',             m:'웨트',  tot:354, fail:61,  rate:17.23 },
+      { n:'니트, 스웨터',     m:'드라이', tot:340, fail:39,  rate:11.47 },
+      { n:'바지',             m:'드라이', tot:335, fail:76,  rate:22.69 },
+      { n:'일반셔츠',         m:'웨트',  tot:152, fail:13,  rate:8.55  },
+      { n:'재킷',             m:'드라이', tot:132, fail:23,  rate:17.42 },
+      { n:'코트, 트렌치코트', m:'드라이', tot:128, fail:13,  rate:10.16 },
+      { n:'후드티, 맨투맨티', m:'웨트',  tot:119, fail:35,  rate:29.41 },
+      { n:'가디건',           m:'드라이', tot:115, fail:11,  rate:9.57  },
+      { n:'티셔츠',           m:'웨트',  tot:105, fail:15,  rate:14.29 },
+      { n:'재킷',             m:'웨트',  tot:104, fail:10,  rate:9.62  },
+      { n:'정장재킷',         m:'드라이', tot:77,  fail:13,  rate:16.88 },
+      { n:'와이셔츠',         m:'웨트',  tot:72,  fail:7,   rate:9.72  },
+      { n:'니트, 스웨터',     m:'웨트',  tot:69,  fail:13,  rate:18.84 },
+      { n:'스커트',           m:'드라이', tot:63,  fail:11,  rate:17.46 },
+      { n:'원피스, 점프수트', m:'드라이', tot:49,  fail:9,   rate:18.37 },
+      { n:'티셔츠',           m:'드라이', tot:39,  fail:4,   rate:10.26 },
+      { n:'블라우스',         m:'드라이', tot:36,  fail:6,   rate:16.67 },
+      { n:'일반셔츠',         m:'드라이', tot:33,  fail:6,   rate:18.18 },
+      { n:'후드티, 맨투맨티', m:'드라이', tot:33,  fail:6,   rate:18.18 },
+      { n:'패딩',             m:'웨트',  tot:28,  fail:3,   rate:10.71 },
+      { n:'가디건',           m:'웨트',  tot:24,  fail:2,   rate:8.33  },
+      { n:'원피스, 점프수트', m:'웨트',  tot:20,  fail:2,   rate:10.00 },
+      { n:'롱패딩점퍼',       m:'웨트',  tot:19,  fail:4,   rate:21.05 },
+      { n:'와이셔츠',         m:'드라이', tot:19,  fail:3,   rate:15.79 },
+      { n:'머플러',           m:'드라이', tot:17,  fail:1,   rate:5.88  },
+      { n:'스커트',           m:'웨트',  tot:16,  fail:1,   rate:6.25  },
+      { n:'블라우스',         m:'웨트',  tot:15,  fail:0,   rate:0.00  },
+      { n:'패딩',             m:'드라이', tot:14,  fail:1,   rate:7.14  },
+      { n:'세탁가능 부속품',  m:'드라이', tot:11,  fail:1,   rate:9.09  },
+      { n:'모자',             m:'드라이', tot:5,   fail:0,   rate:0.00  },
+      { n:'세탁가능 부속품',  m:'웨트',  tot:5,   fail:0,   rate:0.00  },
+      { n:'코트, 트렌치코트', m:'웨트',  tot:5,   fail:0,   rate:0.00  },
+      { n:'머플러',           m:'웨트',  tot:4,   fail:0,   rate:0.00  },
+      { n:'정장조끼',         m:'드라이', tot:3,   fail:1,   rate:33.33 },
+      { n:'스카프',           m:'드라이', tot:2,   fail:0,   rate:0.00  },
+      { n:'에코백/토트백',    m:'웨트',  tot:2,   fail:2,   rate:100.00},
+      { n:'장갑',             m:'드라이', tot:2,   fail:1,   rate:50.00 },
+      { n:'캐주얼조끼',       m:'웨트',  tot:2,   fail:0,   rate:0.00  },
+      { n:'패딩바지',         m:'웨트',  tot:2,   fail:0,   rate:0.00  },
+      { n:'패딩조끼',         m:'웨트',  tot:2,   fail:1,   rate:50.00 },
+      { n:'경량패딩',         m:'드라이', tot:1,   fail:0,   rate:0.00  },
+      { n:'넥타이',           m:'드라이', tot:1,   fail:0,   rate:0.00  },
+      { n:'솔',               m:'드라이', tot:1,   fail:0,   rate:0.00  },
+      { n:'수영복',           m:'웨트',  tot:1,   fail:0,   rate:0.00  },
+      { n:'정장재킷',         m:'웨트',  tot:1,   fail:0,   rate:0.00  },
+      { n:'캐주얼조끼',       m:'드라이', tot:1,   fail:0,   rate:0.00  },
+      { n:'패딩조끼',         m:'드라이', tot:1,   fail:0,   rate:0.00  }
+    ];
+
+    // 품목명 기준 집계 (차트용)
+    var aggMap = {};
+    itemRows.forEach(function(r) {
+      if (!aggMap[r.n]) aggMap[r.n] = { tot:0, fail:0 };
+      aggMap[r.n].tot  += r.tot;
+      aggMap[r.n].fail += r.fail;
+    });
+    var aggItems = Object.keys(aggMap).map(function(n) {
+      return { n: n, tot: aggMap[n].tot, fail: aggMap[n].fail, rate: aggMap[n].fail / aggMap[n].tot * 100 };
+    }).sort(function(a, b) { return b.tot - a.tot; });
+
+    // ===== TABLE =====
+    function renderTbl(f) {
+      var filtered;
+      if      (f === 'high') filtered = itemRows.filter(function(d){ return d.rate >= 15; });
+      else if (f === 'vol')  filtered = itemRows.filter(function(d){ return d.tot >= 50; });
+      else if (f === 'zero') filtered = itemRows.filter(function(d){ return d.fail === 0; });
+      else if (f === 'wet')  filtered = itemRows.filter(function(d){ return d.m === '웨트'; });
+      else if (f === 'dry')  filtered = itemRows.filter(function(d){ return d.m === '드라이'; });
+      else                   filtered = itemRows;
+
+      var tbody = document.getElementById('tblBody');
+      tbody.innerHTML = filtered.map(function(d) {
+        var col = d.rate >= 20 ? 'var(--negative)' : d.rate >= 10 ? 'var(--warning)' : 'var(--positive)';
+        var bw  = Math.min(d.rate, 100);
+        var badge = d.rate >= 20
+          ? '<span class="badge bd-r">위험</span>'
+          : d.rate >= 10
+          ? '<span class="badge bd-o">주의</span>'
+          : d.fail === 0
+          ? '<span class="badge bd-g">이상없음</span>'
+          : '<span class="badge bd-g">양호</span>';
+        var mBadge = d.m === '웨트'
+          ? '<span class="badge bd-b">웨트</span>'
+          : '<span class="badge" style="background:rgba(155,110,243,0.12);color:var(--accent-secondary);">드라이</span>';
+        return '<tr>'
+          + '<td style="font-weight:600;">' + d.n + '</td>'
+          + '<td>' + mBadge + '</td>'
+          + '<td class="td-r">' + d.tot.toLocaleString() + '</td>'
+          + '<td class="td-r">' + d.fail + '</td>'
+          + '<td><div class="mini-rate"><div class="mini-track"><div class="mini-fill" style="width:' + bw + '%;background:' + col + ';"></div></div><div class="mini-val" style="color:' + col + ';">' + (d.rate === 0 ? '0%' : d.rate.toFixed(1) + '%') + '</div></div></td>'
+          + '<td class="td-c">' + badge + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+    function filterTbl(f, btn) {
+      document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      renderTbl(f);
+    }
+
+    // ===== ChartManager =====
+    var ChartManager = {
+      charts: new Map(),
+      safeInit: function(id, cfg) {
+        if (typeof Chart === 'undefined') { console.error('Chart.js not loaded'); return null; }
+        try {
+          if (this.charts.has(id)) { this.charts.get(id).destroy(); this.charts.delete(id); }
+          var old = document.getElementById(id);
+          if (!old) return null;
+          var parent = old.parentNode;
+          var canvas = document.createElement('canvas');
+          canvas.id = id;
+          canvas.setAttribute('role', 'img');
+          canvas.setAttribute('aria-label', id + ' chart');
+          parent.replaceChild(canvas, old);
+          var chart = new Chart(canvas, cfg);
+          this.charts.set(id, chart);
+          return chart;
+        } catch(err) { console.error('Chart init failed:', id, err); return null; }
+      },
+      destroyAll: function() {
+        this.charts.forEach(function(c){ try { c.destroy(); } catch(e){} });
+        this.charts.clear();
+      }
+    };
+
+    var chartsBuilt = false;
+
+    function getC() {
+      var dark = document.documentElement.classList.contains('theme-dark');
+      return {
+        text:    dark ? '#EDEDED' : '#0D1117',
+        tSec:    dark ? '#8A8A9A' : '#5A6476',
+        grid:    dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
+        acc:     dark ? '#4F8EF7' : '#1E6FE8',
+        sec:     dark ? '#9B6EF3' : '#7B3CE8',
+        pos:     dark ? '#22C87A' : '#0B8C54',
+        neg:     dark ? '#F5475A' : '#D62B3D',
+        warn:    dark ? '#F5A623' : '#B87800'
+      };
+    }
+
+    function buildCharts() {
+      if (typeof Chart === 'undefined') { console.error('Chart.js undefined'); return; }
+      chartsBuilt = true;
+      ChartManager.destroyAll();
+      var c = getC();
+      Chart.defaults.animation = false;
+
+      var baseOpts = {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          tooltip: { enabled: true, padding: 12, cornerRadius: 8 },
+          legend: { labels: { color: c.tSec, font: { family: 'Noto Sans KR', size: 12 }, boxWidth: 12, padding: 14 } }
+        },
+        layout: { padding: 10 }
+      };
+
+      // 1. 일자별 비교 바 차트
+      ChartManager.safeInit('dayChart', {
+        type: 'bar',
+        data: {
+          labels: ['03-17', '03-19', '합산'],
+          datasets: [
+            { label: '합격', data: [584, 1601, 2185], backgroundColor: [c.pos+'AA', c.pos+'AA', c.pos+'CC'], borderRadius: 5, borderSkipped: false },
+            { label: '부적합', data: [86, 308, 394], backgroundColor: [c.neg+'AA', c.neg+'AA', c.neg+'CC'], borderRadius: 5, borderSkipped: false }
+          ]
+        },
+        options: Object.assign({}, baseOpts, {
+          scales: {
+            x: { ticks: { color: c.tSec, font: { family: 'Noto Sans KR' } }, grid: { color: c.grid } },
+            y: { ticks: { color: c.tSec, font: { family: 'Noto Sans KR' } }, grid: { color: c.grid } }
+          }
+        })
+      });
+
+      // 2. 세탁방법 누적 바
+      ChartManager.safeInit('washChart', {
+        type: 'bar',
+        data: {
+          labels: ['웨트 (1,121건)', '드라이 (1,458건)'],
+          datasets: [
+            { label: '합격', data: [952, 1233], backgroundColor: c.pos+'BB', borderRadius: 5, borderSkipped: false },
+            { label: '부적합', data: [169, 225], backgroundColor: c.neg+'BB', borderRadius: 5, borderSkipped: false }
+          ]
+        },
+        options: Object.assign({}, baseOpts, {
+          indexAxis: 'y',
+          scales: {
+            x: { stacked: true, ticks: { color: c.tSec, font: { family: 'Noto Sans KR' } }, grid: { color: c.grid } },
+            y: { stacked: true, ticks: { color: c.text, font: { family: 'Noto Sans KR', weight: '600' } }, grid: { display: false } }
+          }
+        })
+      });
+
+      // 3. 일자별×세탁방법 부적합율 그룹 바
+      ChartManager.safeInit('washDayChart', {
+        type: 'bar',
+        data: {
+          labels: ['웨트', '드라이'],
+          datasets: [
+            { label: '03-17', data: [11.26, 14.06], backgroundColor: c.acc + 'BB', borderRadius: 4, borderSkipped: false },
+            { label: '03-19', data: [16.43, 15.91], backgroundColor: c.sec + 'BB', borderRadius: 4, borderSkipped: false },
+            { label: '합산', data: [15.07, 15.43], backgroundColor: c.warn + 'BB', borderRadius: 4, borderSkipped: false }
+          ]
+        },
+        options: Object.assign({}, baseOpts, {
+          scales: {
+            x: { ticks: { color: c.tSec, font: { family: 'Noto Sans KR' } }, grid: { color: c.grid } },
+            y: { ticks: { color: c.tSec, font: { family: 'Noto Sans KR' }, callback: function(v){ return v + '%'; } }, grid: { color: c.grid }, max: 25 }
+          }
+        })
+      });
+
+      // 4. 교차 분석 그룹 바
+      ChartManager.safeInit('crossChart', {
+        type: 'bar',
+        data: {
+          labels: ['웨트+얼룩N', '웨트+얼룩Y', '드라이+얼룩N', '드라이+얼룩Y'],
+          datasets: [
+            { label: '합격', data: [723, 229, 1140, 93], backgroundColor: c.pos+'BB', borderRadius: 4, borderSkipped: false },
+            { label: '부적합', data: [77, 92, 181, 44], backgroundColor: c.neg+'BB', borderRadius: 4, borderSkipped: false }
+          ]
+        },
+        options: Object.assign({}, baseOpts, {
+          scales: {
+            x: { ticks: { color: c.tSec, font: { size: 11, family: 'Noto Sans KR' } }, grid: { color: c.grid } },
+            y: { ticks: { color: c.tSec, font: { family: 'Noto Sans KR' } }, grid: { color: c.grid } }
+          }
+        })
+      });
+
+      // 5. 품목별 처리량 (집계, Top 12)
+      var top12 = aggItems.slice(0, 12);
+      ChartManager.safeInit('catVolChart', {
+        type: 'bar',
+        data: {
+          labels: top12.map(function(d){ return d.n; }),
+          datasets: [{
+            label: '처리 건수',
+            data: top12.map(function(d){ return d.tot; }),
+            backgroundColor: top12.map(function(d, i){ return i < 2 ? c.acc+'CC' : i < 5 ? c.sec+'BB' : c.tSec+'55'; }),
+            borderRadius: 4, borderSkipped: false
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+          plugins: { tooltip: { enabled: true, padding: 12, cornerRadius: 8 }, legend: { display: false } },
+          scales: {
+            x: { ticks: { color: c.tSec, font: { family: 'Noto Sans KR' } }, grid: { color: c.grid } },
+            y: { ticks: { color: c.text, font: { size: 11, family: 'Noto Sans KR' } }, grid: { display: false } }
+          },
+          layout: { padding: { right: 12 } }
+        }
+      });
+
+      // 6. 품목별 부적합율 (집계, 10건 이상)
+      var rejItems = aggItems.filter(function(d){ return d.tot >= 10; })
+        .sort(function(a, b){ return b.rate - a.rate; });
+      ChartManager.safeInit('catRejChart', {
+        type: 'bar',
+        data: {
+          labels: rejItems.map(function(d){ return d.n; }),
+          datasets: [{
+            label: '1차 부적합율 (%)',
+            data: rejItems.map(function(d){ return parseFloat(d.rate.toFixed(1)); }),
+            backgroundColor: rejItems.map(function(d){ return d.rate >= 20 ? c.neg+'CC' : d.rate >= 10 ? c.warn+'CC' : c.pos+'CC'; }),
+            borderRadius: 4, borderSkipped: false
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+          plugins: {
+            tooltip: { enabled: true, padding: 12, cornerRadius: 8, callbacks: { label: function(ctx){ return ' ' + ctx.parsed.x.toFixed(1) + '%'; } } },
+            legend: { display: false }
+          },
+          scales: {
+            x: { ticks: { color: c.tSec, font: { family: 'Noto Sans KR' }, callback: function(v){ return v + '%'; } }, grid: { color: c.grid }, max: 35 },
+            y: { ticks: { color: c.text, font: { size: 11, family: 'Noto Sans KR' } }, grid: { display: false } }
+          },
+          layout: { padding: { right: 12 } }
+        }
+      });
+    }
+
+    function onThemeChange() {
+      chartsBuilt = false;
+      setTimeout(buildCharts, 80);
+    }
+
+    // ===== DOWNLOAD =====
+    async function downloadImage() {
+      var menu = document.querySelector('.viz-menu');
+      menu.style.display = 'none';
+      try {
+        var url = await htmlToImage.toPng(document.body, { quality: 1, pixelRatio: 2 });
+        var a = document.createElement('a'); a.href = url; a.download = 'qc-dashboard-combined.png'; a.click();
+      } catch(e) { console.error('Download failed:', e); }
+      menu.style.display = '';
+    }
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', function() {
+      renderTbl('all');
+      buildCharts();
+    });
+  </script>
+</body>
+</html>
