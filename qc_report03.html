@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ko" class="theme-dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QC 결과 리포트 | 2026.03.17–03.23</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>if(typeof Chart!=='undefined'){Chart.defaults.animation=false;}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<style>
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3250;
+  --text:#e8eaf6;--text2:#9fa8c0;--text3:#5a6282;
+  --acc:#6c7fff;--acc2:#3d4fd6;--ok:#34d399;--warn:#f59e0b;--fail:#f87171;
+  --sec:#a78bfa;--teal:#22d3ee;--rose:#fb7185;
+  --radius:14px;--card-p:24px;
+}
+html.theme-light{
+  --bg:#f1f3f9;--surface:#ffffff;--surface2:#eef0f8;--border:#d5d9f0;
+  --text:#1a1d2e;--text2:#4a5070;--text3:#8a93b8;
+  --acc:#4f5fdf;--acc2:#3040c0;--ok:#059669;--warn:#d97706;--fail:#dc2626;
+  --sec:#7c3aed;--teal:#0891b2;--rose:#e11d48;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR','Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── HEADER ── */
+.header{background:linear-gradient(135deg,#1e2240 0%,#12162e 100%);border-bottom:1px solid var(--border);padding:28px 36px 22px;}
+html.theme-light .header{background:linear-gradient(135deg,#e8ecff 0%,#d4daff 100%);}
+.header-inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-dot{width:10px;height:10px;border-radius:50%;background:var(--acc);box-shadow:0 0 10px var(--acc);}
+.brand-name{font-size:13px;font-weight:500;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;}
+.report-title{font-size:22px;font-weight:700;color:var(--text);margin-top:6px;letter-spacing:-.02em;}
+.report-sub{font-size:13px;color:var(--text2);margin-top:3px;}
+.header-right{display:flex;gap:10px;align-items:center;}
+.btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:.2s;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2);}
+.btn-outline:hover{border-color:var(--acc);color:var(--acc);}
+.btn-primary{background:var(--acc);color:#fff;}
+.btn-primary:hover{background:var(--acc2);}
+
+/* ── LAYOUT ── */
+.main{max-width:1300px;margin:0 auto;padding:32px 24px 60px;}
+.sec{margin-bottom:40px;}
+.sec-title{font-size:14px;font-weight:600;color:var(--text2);letter-spacing:.07em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.sec-title::before{content:'';display:block;width:3px;height:14px;border-radius:2px;background:var(--acc);}
+
+/* ── KPI CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-color,var(--acc));}
+.kpi-label{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.kpi-val{font-size:28px;font-weight:700;color:var(--text);letter-spacing:-.03em;line-height:1;}
+.kpi-sub{font-size:12px;color:var(--text2);margin-top:6px;}
+.kpi-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;margin-top:8px;}
+.badge-ok{background:rgba(52,211,153,.15);color:var(--ok);}
+.badge-fail{background:rgba(248,113,113,.15);color:var(--fail);}
+.badge-warn{background:rgba(245,158,11,.15);color:var(--warn);}
+
+/* ── GRID LAYOUTS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
+.g32{display:grid;grid-template-columns:2fr 1fr;gap:18px;}
+.g23{display:grid;grid-template-columns:1fr 2fr;gap:18px;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--card-p);}
+.card-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:16px;letter-spacing:.04em;}
+.chart-wrap{position:relative;}
+.h180{height:180px;}
+.h220{height:220px;}
+.h260{height:260px;}
+.h300{height:300px;}
+.h340{height:340px;}
+.h380{height:380px;}
+
+/* ── TREND LINE ── */
+.trend-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--card-p);}
+
+/* ── STAT ROWS ── */
+.stat-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.stat-label{font-size:13px;color:var(--text2);min-width:110px;flex-shrink:0;}
+.stat-bar-wrap{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.stat-bar{height:100%;border-radius:4px;transition:width .8s ease;}
+.stat-pct{font-size:13px;font-weight:600;color:var(--text);min-width:46px;text-align:right;}
+.stat-cnt{font-size:11px;color:var(--text3);min-width:60px;text-align:right;}
+
+/* ── INSIGHT BOX ── */
+.insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.insight{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.insight-icon{font-size:20px;margin-bottom:8px;}
+.insight-title{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px;}
+.insight-body{font-size:13px;color:var(--text);line-height:1.5;}
+
+/* ── COLOR LEGEND ── */
+.color-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+
+/* ── FILTER TABS ── */
+.filter-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.filter-tab{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:transparent;transition:.15s;}
+.filter-tab.active{background:var(--acc);color:#fff;border-color:var(--acc);}
+
+/* ── TABLE ── */
+.tbl-scroll{overflow-x:auto;margin-top:12px;}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{background:var(--surface2);color:var(--text2);font-weight:600;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:12px;}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--surface2);}
+.tbl .num{text-align:right;font-variant-numeric:tabular-nums;}
+.fail-rate{font-weight:700;}
+.rate-high{color:var(--fail);}
+.rate-mid{color:var(--warn);}
+.rate-ok{color:var(--ok);}
+
+/* ── CROSS TABLE ── */
+.cross-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+.cross-cell{padding:14px;border-radius:10px;text-align:center;}
+.cross-cell .cross-label{font-size:11px;color:var(--text2);margin-bottom:4px;}
+.cross-cell .cross-val{font-size:22px;font-weight:700;}
+.cross-cell .cross-cnt{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* ── SPOTTING HIGHLIGHT ── */
+.spot-alert{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:10px;padding:14px 16px;margin-top:14px;font-size:13px;color:var(--text);line-height:1.6;}
+.spot-alert strong{color:var(--fail);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1050px){.kpi-grid{grid-template-columns:repeat(3,1fr);}.g3{grid-template-columns:1fr 1fr;}}
+@media(max-width:860px){.g2,.g32,.g23{grid-template-columns:1fr;}.insight-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:560px){.kpi-grid{grid-template-columns:1fr 1fr;}.insight-grid{grid-template-columns:1fr;}}
+@media(max-width:375px){.kpi-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="brand"><div class="brand-dot"></div><span class="brand-name">QC Dashboard</span></div>
+      <div class="report-title">QC 결과 리포트</div>
+      <div class="report-sub">2026.03.17 – 2026.03.23 &nbsp;|&nbsp; 총 6일 &nbsp;|&nbsp; 6,615건 분석</div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-outline" onclick="toggleTheme()">🌙 테마</button>
+      <button class="btn btn-primary" onclick="downloadPng()">↓ PNG 저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="main" id="capture-root">
+
+<!-- KPI -->
+<div class="sec">
+  <div class="sec-title">핵심 지표</div>
+  <div class="kpi-grid">
+    <div class="kpi" style="--kpi-color:var(--acc)">
+      <div class="kpi-label">총 처리건수</div>
+      <div class="kpi-val" data-count="6615">0</div>
+      <div class="kpi-sub">6일 누적</div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--ok)">
+      <div class="kpi-label">품질 적합</div>
+      <div class="kpi-val" data-count="5500">0</div>
+      <div class="kpi-sub"><span class="kpi-badge badge-ok">83.1%</span></div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--fail)">
+      <div class="kpi-label">품질 부적합</div>
+      <div class="kpi-val" data-count="1115">0</div>
+      <div class="kpi-sub"><span class="kpi-badge badge-fail">16.9%</span></div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--sec)">
+      <div class="kpi-label">스팟팅 진행</div>
+      <div class="kpi-val" data-count="827">0</div>
+      <div class="kpi-sub"><span class="kpi-badge badge-fail">부적합률 88.6%</span></div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--warn)">
+      <div class="kpi-label">얼룩 있음 (Y)</div>
+      <div class="kpi-val" data-count="839">0</div>
+      <div class="kpi-sub"><span class="kpi-badge badge-warn">부적합률 31.6%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 일자별 추이 -->
+<div class="sec">
+  <div class="sec-title">일자별 처리량 & 부적합률 추이</div>
+  <div class="trend-card">
+    <div class="card-title">일자별 QC 현황 (처리량 / 부적합률)</div>
+    <div class="chart-wrap h300"><canvas id="trendChart" role="img"></canvas></div>
+  </div>
+</div>
+
+<!-- 세탁방법 + 얼룩 -->
+<div class="sec">
+  <div class="sec-title">세탁방법 & 얼룩체크 분석</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">세탁방법별 처리량 & 부적합률</div>
+      <div class="chart-wrap h260"><canvas id="washChart" role="img"></canvas></div>
+      <div style="margin-top:14px;">
+        <div class="stat-row">
+          <span class="stat-label">드라이</span>
+          <div class="stat-bar-wrap"><div class="stat-bar" style="width:74.3%;background:var(--acc);"></div></div>
+          <span class="stat-pct rate-mid">17.8%</span>
+          <span class="stat-cnt">4,912건</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">웨트</span>
+          <div class="stat-bar-wrap"><div class="stat-bar" style="width:44.7%;background:var(--teal);"></div></div>
+          <span class="stat-pct rate-ok">14.2%</span>
+          <span class="stat-cnt">1,703건</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">세탁전 얼룩체크 (Y/N) 분석</div>
+      <div class="chart-wrap h260"><canvas id="stainChart" role="img"></canvas></div>
+      <div style="margin-top:14px;">
+        <div class="stat-row">
+          <span class="stat-label">얼룩 없음 (N)</span>
+          <div class="stat-bar-wrap"><div class="stat-bar" style="width:46.6%;background:var(--ok);"></div></div>
+          <span class="stat-pct rate-ok">14.7%</span>
+          <span class="stat-cnt">5,776건</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">얼룩 있음 (Y)</span>
+          <div class="stat-bar-wrap"><div class="stat-bar" style="width:100%;background:var(--fail);"></div></div>
+          <span class="stat-pct rate-high">31.6%</span>
+          <span class="stat-cnt">839건</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 스팟팅 분석 -->
+<div class="sec">
+  <div class="sec-title">스팟팅 분석</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">스팟팅 진행 여부별 부적합률</div>
+      <div class="chart-wrap h260"><canvas id="spotChart" role="img"></canvas></div>
+      <div class="spot-alert">
+        ⚠️ 스팟팅 <strong>진행</strong> 항목의 부적합률 <strong>88.6%</strong> —
+        스팟팅이 진행된 의류는 대부분 QC 기준 미달로 이어짐. 사전 처리 후에도 품질 확보가 어려운 품목 검토 필요.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">스팟팅 × 얼룩체크 교차 분석</div>
+      <div class="cross-grid">
+        <div class="cross-cell" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);">
+          <div class="cross-label">스팟팅 미진행 + 얼룩N</div>
+          <div class="cross-val" style="color:var(--ok);">5.5%</div>
+          <div class="cross-cnt">5,138건</div>
+        </div>
+        <div class="cross-cell" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);">
+          <div class="cross-label">스팟팅 미진행 + 얼룩Y</div>
+          <div class="cross-val" style="color:var(--warn);">15.4%</div>
+          <div class="cross-cnt">650건</div>
+        </div>
+        <div class="cross-cell" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.4);">
+          <div class="cross-label">스팟팅 진행 + 얼룩N</div>
+          <div class="cross-val" style="color:var(--fail);">89.0%</div>
+          <div class="cross-cnt">638건</div>
+        </div>
+        <div class="cross-cell" style="background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.5);">
+          <div class="cross-label">스팟팅 진행 + 얼룩Y</div>
+          <div class="cross-val" style="color:var(--fail);">87.3%</div>
+          <div class="cross-cnt">189건</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="card-title">세탁방법 × 스팟팅</div>
+        <div class="chart-wrap h180"><canvas id="washSpotChart" role="img"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 컬러 분석 -->
+<div class="sec">
+  <div class="sec-title">의류 컬러 분석</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">컬러 밝기 구간별 부적합률 (0=블랙 ~ 10=화이트)</div>
+      <div class="chart-wrap h260"><canvas id="brightChart" role="img"></canvas></div>
+      <div style="margin-top:14px;">
+        <div class="stat-row">
+          <span class="stat-label">다크 (0~2)</span>
+          <div class="stat-bar-wrap"><div class="stat-bar" style="width:100%;background:var(--fail);"></div></div>
+          <span class="stat-pct rate-high">20.7%</span>
+          <span class="stat-cnt">2,551건</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">미디엄 (2~5)</span>
+          <div class="stat-bar-wrap"><div class="stat-bar" style="width:62.8%;background:var(--warn);"></div></div>
+          <span class="stat-pct rate-mid">13.0%</span>
+          <span class="stat-cnt">1,472건</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">라이트 (5~8)</span>
+          <div class="stat-bar-wrap"><div class="stat-bar" style="width:56.0%;background:var(--ok);"></div></div>
+          <span class="stat-pct rate-ok">11.6%</span>
+          <span class="stat-cnt">1,254건</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">화이트 (8~10)</span>
+          <div class="stat-bar-wrap"><div class="stat-bar" style="width:92.8%;background:var(--sec);"></div></div>
+          <span class="stat-pct rate-high">19.2%</span>
+          <span class="stat-cnt">1,034건</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">컬러별 부적합률 Top 12 (10건 이상)</div>
+      <div class="chart-wrap h380"><canvas id="colorChart" role="img"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- 품목 분석 -->
+<div class="sec">
+  <div class="sec-title">품목 분석</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">중분류별 부적합률</div>
+      <div class="chart-wrap h260"><canvas id="catChart" role="img"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">품목별 부적합률 (주요 품목)</div>
+      <div class="chart-wrap h260"><canvas id="itemChart" role="img"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 품목 테이블 -->
+  <div class="card" style="margin-top:18px;">
+    <div class="card-title">품목 상세 현황</div>
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filterTbl('all',this)">전체</button>
+      <button class="filter-tab" onclick="filterTbl('high',this)">부적합 높음 (≥20%)</button>
+      <button class="filter-tab" onclick="filterTbl('mid',this)">주의 (10~20%)</button>
+      <button class="filter-tab" onclick="filterTbl('low',this)">양호 (&lt;10%)</button>
+    </div>
+    <div class="tbl-scroll">
+      <table class="tbl" id="itemTbl">
+        <thead>
+          <tr>
+            <th>품목명</th>
+            <th class="num">처리량</th>
+            <th class="num">적합</th>
+            <th class="num">부적합</th>
+            <th class="num">부적합률</th>
+          </tr>
+        </thead>
+        <tbody id="itemTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 인사이트 -->
+<div class="sec">
+  <div class="sec-title">주요 인사이트</div>
+  <div class="insight-grid">
+    <div class="insight">
+      <div class="insight-icon">📅</div>
+      <div class="insight-title">3/21 최고 부적합률</div>
+      <div class="insight-body">3월 21일 부적합률 22.0%로 6일 중 최고. 처리량(1,330건)도 많아 절대 부적합건수가 가장 많은 날.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">🔴</div>
+      <div class="insight-title">스팟팅 진행 = 고위험</div>
+      <div class="insight-body">스팟팅 진행 항목 88.6% 부적합. 스팟팅이 필요한 수준의 오염은 세탁 후에도 QC 통과가 매우 어려운 상황.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">🎨</div>
+      <div class="insight-title">다크 & 화이트 취약</div>
+      <div class="insight-body">컬러 밝기 기준 다크(20.7%)와 화이트(19.2%) 계열이 미디엄/라이트 대비 부적합률 높음. 양 극단 컬러 주의 필요.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">👖</div>
+      <div class="insight-title">하의·바지 최다 부적합</div>
+      <div class="insight-body">바지 23.3%, 정장재킷 23.3%, 후드티/맨투맨 23.2% 순. 하의 중분류 전체 22.7%로 가장 높은 부적합률.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">💧</div>
+      <div class="insight-title">웨트가 드라이보다 양호</div>
+      <div class="insight-body">웨트 14.2% vs 드라이 17.8%. 스팟팅 진행 비율을 제외하면 웨트 세탁의 품질 결과가 더 안정적.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">✅</div>
+      <div class="insight-title">셔츠·잡화 양호</div>
+      <div class="insight-body">셔츠 중분류 9.3%, 잡화 4.8%, 부속품 3.8%로 가장 낮은 부적합률. 이 카테고리는 현재 품질 기준 잘 유지 중.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+/* ── DATA ── */
+var D = {
+  dates: ['03-17','03-19','03-20','03-21','03-22','03-23'],
+  dateTot: [672,1921,1054,1330,623,1015],
+  dateFail: [88,317,162,292,106,150],
+  dateRate: [13.1,16.5,15.4,22.0,17.0,14.8],
+
+  washLabels: ['드라이','웨트'],
+  washTot: [4912,1703],
+  washFail: [874,241],
+  washRate: [17.8,14.2],
+
+  stainLabels: ['얼룩 없음 (N)','얼룩 있음 (Y)'],
+  stainTot: [5776,839],
+  stainFail: [850,265],
+  stainRate: [14.7,31.6],
+
+  spotLabels: ['스팟팅 미진행','스팟팅 진행'],
+  spotTot: [5788,827],
+  spotFail: [382,733],
+  spotRate: [6.6,88.6],
+
+  washSpotLabels: ['드라이+미진행','드라이+진행','웨트+미진행','웨트+진행'],
+  washSpotRate: [6.8,88.2,5.9,90.4],
+  washSpotTot: [4251,661,1537,166],
+
+  brightLabels: ['다크(0~2)','미디엄(2~5)','라이트(5~8)','화이트(8~10)'],
+  brightTot: [2551,1472,1254,1034],
+  brightFail: [528,191,146,199],
+  brightRate: [20.7,13.0,11.6,19.2],
+
+  colorLabels: ['다크네이비/블랙','오프 화이트','다크 카키','버건디','검정','크림 베이지','차콜 블랙','아이보리','카키 올리브','카키 베이지','네이비','블랙'],
+  colorRate: [36.4,30.8,28.6,28.0,25.0,25.0,23.2,22.6,22.2,22.0,21.9,21.1],
+  colorTot: [11,13,14,25,28,16,82,438,18,127,270,1652],
+
+  catLabels: ['상의','하의','즐겨찾기','아우터','셔츠','잡화','부속품'],
+  catTot: [2361,2209,1001,579,366,63,26],
+  catFail: [300,502,155,117,34,3,1],
+  catRate: [12.7,22.7,15.5,20.2,9.3,4.8,3.8],
+
+  itemRows: [
+    {n:'바지',tot:2191,fail:511,rate:23.3,m:'하의'},
+    {n:'정장재킷',tot:215,fail:50,rate:23.3,m:'아우터'},
+    {n:'후드티, 맨투맨티',tot:267,fail:62,rate:23.2,m:'상의'},
+    {n:'패딩',tot:85,fail:16,rate:18.8,m:'아우터'},
+    {n:'코트, 트렌치코트',tot:346,fail:63,rate:18.2,m:'아우터'},
+    {n:'원피스, 점프수트',tot:132,fail:23,rate:17.4,m:'상의'},
+    {n:'재킷',tot:446,fail:61,rate:13.7,m:'아우터'},
+    {n:'니트, 스웨터',tot:1420,fail:178,rate:12.5,m:'상의'},
+    {n:'블라우스',tot:104,fail:13,rate:12.5,m:'상의'},
+    {n:'티셔츠',tot:243,fail:29,rate:11.9,m:'상의'},
+    {n:'스커트',tot:139,fail:16,rate:11.5,m:'하의'},
+    {n:'롱패딩점퍼',tot:37,fail:4,rate:10.8,m:'아우터'},
+    {n:'가디건',tot:432,fail:43,rate:10.0,m:'상의'},
+    {n:'일반셔츠',tot:340,fail:32,rate:9.4,m:'셔츠'},
+  ]
+};
+
+/* ── COLORS ── */
+var C = {
+  acc:'#6c7fff', teal:'#22d3ee', ok:'#34d399', fail:'#f87171', warn:'#f59e0b',
+  sec:'#a78bfa', rose:'#fb7185',
+  grid: 'rgba(255,255,255,0.06)'
+};
+function getGrid(){ return document.documentElement.classList.contains('theme-light') ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)'; }
+function getText2(){ return getComputedStyle(document.documentElement).getPropertyValue('--text2').trim(); }
+
+/* ── CHART MANAGER ── */
+var ChartManager = {
+  charts: new Map(),
+  safeInit: function(id, cfg){
+    if(typeof Chart==='undefined'){console.error('Chart.js not loaded');return null;}
+    try{
+      if(this.charts.has(id)){this.charts.get(id).destroy();this.charts.delete(id);}
+      var old=document.getElementById(id); if(!old)return null;
+      var parent=old.parentNode;
+      var canvas=document.createElement('canvas');
+      canvas.id=id;canvas.setAttribute('role','img');
+      parent.replaceChild(canvas,old);
+      var chart=new Chart(canvas,cfg);
+      this.charts.set(id,chart);
+      return chart;
+    }catch(err){console.error('Chart init failed:',id,err);return null;}
+  },
+  destroyAll:function(){this.charts.forEach(function(c){try{c.destroy();}catch(e){}});this.charts.clear();}
+};
+
+function rateColor(r){return r>=20?C.fail:r>=15?C.warn:C.ok;}
+function rateColors(arr){return arr.map(function(r){return rateColor(r);});}
+
+function barCfg(labels, datasets, opts){
+  return {
+    type:'bar',
+    data:{labels:labels, datasets:datasets},
+    options:Object.assign({
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.parsed.y+'%';}}}},
+      scales:{
+        x:{grid:{color:getGrid()},ticks:{color:getText2(),font:{size:11}}},
+        y:{grid:{color:getGrid()},ticks:{color:getText2(),font:{size:11}},beginAtZero:true}
+      }
+    },opts||{})
+  };
+}
+
+function hBarCfg(labels, dataset, colors){
+  return {
+    type:'bar',
+    data:{labels:labels, datasets:[{data:dataset,backgroundColor:colors,borderRadius:4,barThickness:14}]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.parsed.x+'%';}}}},
+      scales:{
+        x:{grid:{color:getGrid()},ticks:{color:getText2(),font:{size:11}},beginAtZero:true,max:100},
+        y:{grid:{display:false},ticks:{color:getText2(),font:{size:11}}}
+      }
+    }
+  };
+}
+
+function buildCharts(){
+  var grid=getGrid(), txt2=getText2();
+
+  // Chart 1: Trend (dual axis)
+  ChartManager.safeInit('trendChart',{
+    type:'bar',
+    data:{
+      labels:D.dates,
+      datasets:[
+        {label:'처리량',data:D.dateTot,backgroundColor:'rgba(108,127,255,0.25)',borderColor:C.acc,borderWidth:1.5,borderRadius:4,yAxisID:'y'},
+        {label:'부적합률(%)',data:D.dateRate,type:'line',borderColor:C.fail,backgroundColor:'rgba(248,113,113,0.1)',pointBackgroundColor:C.fail,pointRadius:5,tension:.3,yAxisID:'y2'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:txt2,font:{size:11},boxWidth:12}},
+        tooltip:{callbacks:{
+          label:function(ctx){
+            if(ctx.datasetIndex===0)return ' 처리량: '+ctx.parsed.y+'건';
+            return ' 부적합률: '+ctx.parsed.y+'%';
+          }
+        }}
+      },
+      scales:{
+        x:{grid:{color:grid},ticks:{color:txt2,font:{size:12}}},
+        y:{grid:{color:grid},ticks:{color:txt2,font:{size:11}},beginAtZero:true,title:{display:true,text:'처리량(건)',color:txt2,font:{size:11}}},
+        y2:{position:'right',grid:{display:false},ticks:{color:C.fail,font:{size:11},callback:function(v){return v+'%'}},beginAtZero:true,max:30,title:{display:true,text:'부적합률(%)',color:C.fail,font:{size:11}}}
+      }
+    }
+  });
+
+  // Chart 2: Wash
+  ChartManager.safeInit('washChart',{
+    type:'bar',
+    data:{
+      labels:D.washLabels,
+      datasets:[
+        {label:'처리량',data:D.washTot,backgroundColor:['rgba(108,127,255,0.3)','rgba(34,211,238,0.3)'],borderColor:[C.acc,C.teal],borderWidth:1.5,borderRadius:6,yAxisID:'y'},
+        {label:'부적합률',data:D.washRate,type:'line',borderColor:C.fail,backgroundColor:'transparent',pointBackgroundColor:C.fail,pointRadius:7,yAxisID:'y2'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:grid},ticks:{color:txt2}},
+        y:{grid:{color:grid},ticks:{color:txt2,font:{size:11}}},
+        y2:{position:'right',grid:{display:false},ticks:{color:C.fail,font:{size:11},callback:function(v){return v+'%'}},beginAtZero:true,max:30}
+      }
+    }
+  });
+
+  // Chart 3: Stain
+  ChartManager.safeInit('stainChart',{
+    type:'doughnut',
+    data:{
+      labels:['얼룩없음(N) 적합','얼룩없음(N) 부적합','얼룩있음(Y) 적합','얼룩있음(Y) 부적합'],
+      datasets:[{
+        data:[5776-850,850,839-265,265],
+        backgroundColor:['rgba(52,211,153,0.8)','rgba(248,113,113,0.8)','rgba(52,211,153,0.4)','rgba(248,113,113,0.5)'],
+        borderColor:'var(--surface)',borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{display:true,position:'bottom',labels:{color:txt2,font:{size:10},boxWidth:10,padding:8}}}
+    }
+  });
+
+  // Chart 4: Spotting
+  ChartManager.safeInit('spotChart',{
+    type:'bar',
+    data:{
+      labels:D.spotLabels,
+      datasets:[
+        {label:'적합',data:[D.spotTot[0]-D.spotFail[0],D.spotTot[1]-D.spotFail[1]],backgroundColor:['rgba(52,211,153,0.7)','rgba(52,211,153,0.3)'],borderRadius:6},
+        {label:'부적합',data:D.spotFail,backgroundColor:['rgba(248,113,113,0.4)','rgba(248,113,113,0.85)'],borderRadius:6}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:txt2,font:{size:11},boxWidth:10}},
+        tooltip:{callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+ctx.parsed.y+'건';}}}
+      },
+      scales:{
+        x:{stacked:true,grid:{color:grid},ticks:{color:txt2}},
+        y:{stacked:true,grid:{color:grid},ticks:{color:txt2,font:{size:11}}}
+      }
+    }
+  });
+
+  // Chart 5: Wash × Spot
+  ChartManager.safeInit('washSpotChart',{
+    type:'bar',
+    data:{
+      labels:D.washSpotLabels,
+      datasets:[{
+        data:D.washSpotRate,
+        backgroundColor:D.washSpotRate.map(function(r){
+          return r>80?'rgba(248,113,113,0.8)':r>15?'rgba(245,158,11,0.7)':'rgba(52,211,153,0.7)';
+        }),
+        borderRadius:6
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.parsed.y+'%';}}}},
+      scales:{
+        x:{grid:{color:grid},ticks:{color:txt2,font:{size:10}}},
+        y:{grid:{color:grid},ticks:{color:txt2,font:{size:10}},beginAtZero:true,max:100}
+      }
+    }
+  });
+
+  // Chart 6: Brightness
+  ChartManager.safeInit('brightChart',{
+    type:'bar',
+    data:{
+      labels:D.brightLabels,
+      datasets:[
+        {label:'처리량',data:D.brightTot,backgroundColor:['rgba(30,30,30,0.8)','rgba(100,100,120,0.7)','rgba(180,180,220,0.6)','rgba(240,240,255,0.7)'],borderRadius:6,yAxisID:'y'},
+        {label:'부적합률',data:D.brightRate,type:'line',borderColor:C.fail,backgroundColor:'rgba(248,113,113,0.1)',pointBackgroundColor:C.fail,pointRadius:6,yAxisID:'y2'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:txt2,font:{size:10},boxWidth:10}}},
+      scales:{
+        x:{grid:{color:grid},ticks:{color:txt2,font:{size:11}}},
+        y:{grid:{color:grid},ticks:{color:txt2,font:{size:11}}},
+        y2:{position:'right',grid:{display:false},ticks:{color:C.fail,font:{size:11},callback:function(v){return v+'%'}},beginAtZero:true,max:35}
+      }
+    }
+  });
+
+  // Chart 7: Color fail rate horizontal bar
+  ChartManager.safeInit('colorChart', hBarCfg(
+    D.colorLabels,
+    D.colorRate,
+    D.colorRate.map(function(r){return r>=25?'rgba(248,113,113,0.8)':r>=20?'rgba(245,158,11,0.75)':'rgba(108,127,255,0.7)';})
+  ));
+
+  // Chart 8: Category
+  ChartManager.safeInit('catChart',{
+    type:'bar',
+    data:{
+      labels:D.catLabels,
+      datasets:[
+        {label:'적합',data:D.catTot.map(function(t,i){return t-D.catFail[i];}),backgroundColor:'rgba(52,211,153,0.6)',borderRadius:4},
+        {label:'부적합',data:D.catFail,backgroundColor:'rgba(248,113,113,0.75)',borderRadius:4}
+      ]
+    },
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:txt2,font:{size:10},boxWidth:10}},
+        tooltip:{mode:'index',intersect:false}
+      },
+      scales:{
+        x:{stacked:true,grid:{color:grid},ticks:{color:txt2,font:{size:10}}},
+        y:{stacked:true,grid:{display:false},ticks:{color:txt2,font:{size:11}}}
+      }
+    }
+  });
+
+  // Chart 9: Item fail rate
+  var topItems = D.itemRows.slice(0,10);
+  ChartManager.safeInit('itemChart',{
+    type:'bar',
+    data:{
+      labels:topItems.map(function(d){return d.n;}),
+      datasets:[{
+        data:topItems.map(function(d){return d.rate;}),
+        backgroundColor:topItems.map(function(d){return rateColor(d.rate)+'cc';}),
+        borderRadius:4
+      }]
+    },
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.parsed.x+'%';}}}},
+      scales:{
+        x:{grid:{color:grid},ticks:{color:txt2,font:{size:10}},beginAtZero:true,max:30},
+        y:{grid:{display:false},ticks:{color:txt2,font:{size:10}}}
+      }
+    }
+  });
+}
+
+/* ── TABLE ── */
+function renderTable(filter){
+  var tbody=document.getElementById('itemTbody');
+  tbody.innerHTML='';
+  D.itemRows.forEach(function(r){
+    var show = filter==='all' || (filter==='high'&&r.rate>=20) || (filter==='mid'&&r.rate>=10&&r.rate<20) || (filter==='low'&&r.rate<10);
+    if(!show)return;
+    var cls=r.rate>=20?'rate-high':r.rate>=15?'rate-mid':'rate-ok';
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+r.n+'</td><td class="num">'+r.tot.toLocaleString()+'</td><td class="num">'+(r.tot-r.fail).toLocaleString()+'</td><td class="num">'+r.fail.toLocaleString()+'</td><td class="num fail-rate '+cls+'">'+r.rate+'%</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function filterTbl(f,btn){
+  document.querySelectorAll('.filter-tab').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderTable(f);
+}
+
+/* ── ANIMATED COUNTERS ── */
+function animateCounters(){
+  document.querySelectorAll('[data-count]').forEach(function(el){
+    var target=parseInt(el.dataset.count);
+    var start=0, dur=1200, step=16;
+    var inc=target/(dur/step);
+    var timer=setInterval(function(){
+      start+=inc;
+      if(start>=target){start=target;clearInterval(timer);}
+      el.textContent=Math.floor(start).toLocaleString();
+    },step);
+  });
+}
+
+/* ── THEME ── */
+function toggleTheme(){
+  var h=document.documentElement;
+  h.classList.toggle('theme-dark');
+  h.classList.toggle('theme-light');
+  setTimeout(function(){ChartManager.destroyAll();buildCharts();},50);
+}
+
+/* ── DOWNLOAD ── */
+function downloadPng(){
+  if(typeof htmlToImage==='undefined'){alert('html-to-image 로드 중');return;}
+  htmlToImage.toPng(document.getElementById('capture-root'),{quality:.95,pixelRatio:2,backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()})
+    .then(function(dataUrl){var a=document.createElement('a');a.href=dataUrl;a.download='qc-dashboard-'+new Date().toISOString().slice(0,10)+'.png';a.click();});
+}
+
+/* ── INIT ── */
+window.addEventListener('DOMContentLoaded',function(){
+  renderTable('all');
+  if(typeof Chart!=='undefined'){
+    buildCharts();
+  } else {
+    document.querySelector('script[src*="chart"]').addEventListener('load',buildCharts);
+  }
+  animateCounters();
+});
+</script>
+</body>
+</html>
