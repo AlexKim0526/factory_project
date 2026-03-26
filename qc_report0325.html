@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko" class="theme-light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세탁 QC 부적합률 분석 — 0325 (3일 추이)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script>if(typeof Chart!=='undefined')Chart.defaults.animation=false;</script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html.theme-dark{--bg:#0A0A0A;--surface:#141414;--surface-hover:#1C1C1C;--border:rgba(255,255,255,0.06);--text:#EDEDED;--text-secondary:#888;--accent:#3b82f6;--accent-secondary:#8b5cf6;--positive:#10b981;--negative:#f43f5e;--warning:#f59e0b}
+    html.theme-light{--bg:#F5F6F8;--surface:#FFFFFF;--surface-hover:#F0F1F3;--border:rgba(0,0,0,0.07);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706}
+    body{font-family:'Noto Sans KR','Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+    h1,h2,h3{color:var(--text);letter-spacing:-0.03em;line-height:1.15}
+    h1{font-weight:800;font-size:2.5rem}h2{font-weight:700;font-size:1.4rem}h3{font-weight:600;font-size:1.1rem}
+    .text-secondary{color:var(--text-secondary)}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;transition:box-shadow .2s}
+    .card:hover{box-shadow:0 0 0 1px var(--border),0 8px 24px rgba(0,0,0,.08)}
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .animate{animation:fadeInUp .5s ease-out both}
+    .animate.delay-1{animation-delay:.08s}.animate.delay-2{animation-delay:.16s}.animate.delay-3{animation-delay:.24s}.animate.delay-4{animation-delay:.32s}.animate.delay-5{animation-delay:.4s}.animate.delay-6{animation-delay:.48s}
+    .reveal{opacity:0;transform:translateY(20px);transition:opacity .5s,transform .5s}.reveal.visible{opacity:1;transform:translateY(0)}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+    @media print{body{background:white!important;color:black!important}.viz-menu{display:none}.card{break-inside:avoid}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+    .viz-menu{position:fixed;top:16px;right:16px;z-index:9999}
+    .viz-menu-toggle{width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);transition:all .2s}
+    .viz-menu-toggle:hover{background:var(--surface-hover)}
+    .viz-menu-dropdown{position:absolute;top:52px;right:0;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .2s;backdrop-filter:blur(16px)}
+    .viz-menu-dropdown.open{opacity:1;visibility:visible;transform:translateY(0)}
+    .viz-menu-dropdown button{width:100%;padding:10px 14px;border:none;border-radius:8px;background:transparent;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;transition:background .15s}
+    .viz-menu-dropdown button:hover{background:var(--surface-hover)}
+    .container{max-width:1320px;margin:0 auto;padding:0 24px}
+    .header{padding:56px 0 36px;border-bottom:1px solid var(--border);margin-bottom:44px}
+    .header-meta{font-size:13px;color:var(--text-secondary);margin-bottom:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+    .header-sub{font-size:1rem;color:var(--text-secondary);max-width:760px;margin-top:10px}
+    .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:44px}
+    .kpi-card{padding:16px 20px;border-radius:12px;background:var(--surface);border:1px solid var(--border)}
+    .kpi-label{font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+    .kpi-value{font-size:2rem;font-weight:800;line-height:1;letter-spacing:-.04em;margin-bottom:3px}
+    .kpi-sub{font-size:11px;color:var(--text-secondary)}
+    .delta{font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:2px;padding:2px 8px;border-radius:99px}
+    .delta-up{background:rgba(228,29,72,.1);color:var(--negative)}
+    .delta-down{background:rgba(5,150,105,.1);color:var(--positive)}
+    .delta-flat{background:rgba(100,116,139,.1);color:var(--text-secondary)}
+    .section{margin-bottom:52px}
+    .section-header{display:flex;align-items:baseline;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+    .section-title{font-size:1.3rem;font-weight:700}
+    .badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px}
+    .badge-blue{background:rgba(37,99,235,.1);color:var(--accent)}.badge-red{background:rgba(228,29,72,.1);color:var(--negative)}.badge-amber{background:rgba(217,119,6,.1);color:var(--warning)}.badge-green{background:rgba(5,150,105,.1);color:var(--positive)}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .chart-wrap{height:300px;position:relative}.chart-wrap-tall{height:380px;position:relative}
+    .tbl{width:100%;border-collapse:collapse;margin-top:12px}
+    .tbl th{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:2px solid var(--border);text-align:left}
+    .tbl td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:13px}
+    .tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:var(--surface-hover)}
+    .heatmap-cell{border-radius:6px;padding:10px;text-align:center;font-weight:700;font-size:13px;color:white;display:flex;flex-direction:column;gap:2px}
+    .heatmap-cell .cell-label{font-size:10px;font-weight:500;opacity:.85}.heatmap-cell .cell-val{font-size:1.1rem;font-weight:800}
+    .insight-box{border-radius:10px;padding:16px 20px;border-left:3px solid;margin-top:12px}
+    .insight-box.critical{background:rgba(228,29,72,.05);border-color:var(--negative)}.insight-box.warn{background:rgba(217,119,6,.05);border-color:var(--warning)}.insight-box.ok{background:rgba(5,150,105,.05);border-color:var(--positive)}.insight-box.info{background:rgba(37,99,235,.05);border-color:var(--accent)}
+    .alert-banner{border-radius:12px;padding:20px 24px;margin-bottom:44px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+    .alert-icon{font-size:28px;line-height:1}
+    .footer{padding:36px 0;border-top:1px solid var(--border);margin-top:56px}.footer p{font-size:12px;color:var(--text-secondary)}
+    @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.two-col{grid-template-columns:1fr}}
+    @media(max-width:600px){h1{font-size:1.8rem}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:375px){body{overflow-x:hidden}}
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link" style="position:absolute;left:-9999px;" onfocus="this.style.cssText='position:fixed;left:16px;top:16px;z-index:10000;padding:8px 16px;background:var(--accent);color:white;text-decoration:none;border-radius:4px;'" onblur="this.style.cssText='position:absolute;left:-9999px;'">Skip to content</a>
+  <div class="viz-menu">
+    <button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="메뉴"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button>
+    <div class="viz-menu-dropdown" id="vizMenuDropdown">
+      <button onclick="cycleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">라이트</span></button>
+      <button onclick="downloadImage()"><span>📥</span><span>PNG 저장</span></button>
+      <button onclick="window.print()"><span>🖨️</span><span>인쇄 / PDF</span></button>
+    </div>
+  </div>
+
+  <main id="main-content" role="main">
+    <div class="container">
+
+      <header class="header animate">
+        <div class="header-meta">세탁결벽주의 TF · QC 3일 추이 분석 · 2026.03.25</div>
+        <h1>QC 부적합률 분석 — 03/25</h1>
+        <p class="header-sub">3일간 처리량이 2.1배 증가(7,818→16,792건)하는 동안 부적합률은 15.3%~15.6%에서 구조적으로 고착. 물량 증가에도 불구하고 개선되지 않는 핵심 문제점과 새롭게 악화되는 영역을 분석합니다.</p>
+      </header>
+
+      <!-- ALERT BANNER -->
+      <div class="alert-banner animate" style="background:rgba(228,29,72,0.06);border:1px solid rgba(228,29,72,0.15);">
+        <div class="alert-icon">🚨</div>
+        <div>
+          <p style="font-size:14px;font-weight:700;color:var(--negative);margin-bottom:6px;">3일 연속 악화 — 개선된 품목이 하나도 없습니다</p>
+          <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">블라우스(10.8→15.9→16.9%), 가디건(9.0→11.1→11.9%), 니트/스웨터(11.9→12.1→12.9%), 일반셔츠(6.9→7.1→8.1%) 등 주요 품목이 3일 연속 악화 중이며, 3일 연속 개선된 품목은 <strong>0개</strong>입니다. 구조적 문제가 있습니다.</p>
+        </div>
+      </div>
+
+      <!-- KPI -->
+      <section aria-label="핵심 지표">
+        <div class="kpi-grid">
+          <div class="kpi-card animate delay-1">
+            <div class="kpi-label">전체 부적합률</div>
+            <div class="kpi-value" style="color:var(--negative)">15.32%</div>
+            <div class="kpi-sub">전일 14.84% <span class="delta delta-up">▲ 0.48%p</span></div>
+          </div>
+          <div class="kpi-card animate delay-2">
+            <div class="kpi-label">재세탁률</div>
+            <div class="kpi-value" style="color:var(--text)">0.94%</div>
+            <div class="kpi-sub">전일 1.0% <span class="delta delta-flat">≈ 유지</span></div>
+          </div>
+          <div class="kpi-card animate delay-3">
+            <div class="kpi-label">부적합 후 스팟팅률</div>
+            <div class="kpi-value" style="color:var(--negative)">44.3%</div>
+            <div class="kpi-sub">60%→48%→44% <span class="delta delta-up">3일 연속↓</span></div>
+          </div>
+          <div class="kpi-card animate delay-4">
+            <div class="kpi-label">드라이+얼룩Y</div>
+            <div class="kpi-value" style="color:var(--negative)">38.6%</div>
+            <div class="kpi-sub">35.6→35.8→38.6% <span class="delta delta-up">▲ 악화</span></div>
+          </div>
+          <div class="kpi-card animate delay-5">
+            <div class="kpi-label">총 검사 건수</div>
+            <div class="kpi-value" style="color:var(--accent)">16,792</div>
+            <div class="kpi-sub">3일간 2.1배 증가</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 1: 3-Day Trend -->
+      <section class="section reveal" aria-label="3일 추이">
+        <div class="section-header">
+          <h2 class="section-title">3일 추이 차트</h2>
+          <span class="badge badge-blue">TREND</span>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <h3>전체·세탁방법별 부적합률 추이</h3>
+            <div class="chart-wrap"><canvas id="trendChart" role="img" aria-label="3일 부적합률 추이 라인차트"></canvas></div>
+          </div>
+          <div class="card">
+            <h3>교차분석 추이: 세탁방법 × 얼룩여부</h3>
+            <div class="chart-wrap"><canvas id="crossTrendChart" role="img" aria-label="교차분석 4조합 추이 차트"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: Problem #1 — 드라이+얼룩Y 급등 -->
+      <section class="section reveal" aria-label="핵심 문제 1">
+        <div class="section-header">
+          <h2 class="section-title">핵심 문제 1 — 드라이+얼룩Y: 38.6% (3일 최고치)</h2>
+          <span class="badge badge-red">CRITICAL</span>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <h3>드라이+얼룩Y 내 품목별 부적합률</h3>
+            <p class="text-secondary" style="font-size:12px;margin:6px 0 16px;">816건 중 거의 모든 품목이 33% 이상</p>
+            <div class="chart-wrap-tall"><canvas id="dryStainChart" role="img" aria-label="드라이+얼룩Y 품목별 차트"></canvas></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom:12px">원인 추정 및 대응</h3>
+            <div class="insight-box critical">
+              <p style="font-size:13px;font-weight:700;color:var(--negative);margin-bottom:6px;">원인 추정: 드라이 프리스팟팅 공정 부재</p>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">드라이+얼룩Y의 부적합률이 3일 연속 상승(35.6→35.8→38.6%)하는 반면, 웨트+얼룩Y는 0324에 개선 후 21% 수준 유지. 이 차이는 <strong>웨트 공정에는 전처리가 작동하지만 드라이 공정에는 얼룩 전처리 프로세스 자체가 없거나 실행되지 않고 있음</strong>을 강하게 시사합니다.</p>
+            </div>
+            <div class="insight-box critical" style="margin-top:8px;">
+              <p style="font-size:13px;font-weight:700;color:var(--negative);margin-bottom:6px;">특히 심각: 바지 276건 중 42.4% 부적합</p>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">정장재킷(43.8%), 코트(42.4%), 바지(42.4%), 가디건(41.9%) 등 전 품목이 40% 내외. <strong>드라이 공정에 얼룩이 들어가면 품목 관계없이 부적합</strong>이라는 뜻입니다. 개별 품목 문제가 아니라 공정 자체의 구조적 결함.</p>
+            </div>
+            <div class="insight-box ok" style="margin-top:8px;">
+              <p style="font-size:13px;font-weight:700;color:var(--positive);margin-bottom:6px;">권장 액션: 드라이 투입 전 프리스팟팅 의무화</p>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">얼룩 있는 드라이 의류(일일 ~800건)에 대해 투입 전 스팟팅 스테이션을 경유시키면, 38.6%→20% 내외로 약 <strong>18%p 개선</strong>이 기대됩니다(웨트 얼룩Y 대비 추정).</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: Problem #2 — 스팟팅 처리율 연속 하락 -->
+      <section class="section reveal" aria-label="핵심 문제 2">
+        <div class="section-header">
+          <h2 class="section-title">핵심 문제 2 — 스팟팅 처리율 3일 연속 하락</h2>
+          <span class="badge badge-red">BOTTLENECK</span>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <h3>부적합 건수 vs 스팟팅 진행 추이</h3>
+            <div class="chart-wrap"><canvas id="spottingTrendChart" role="img" aria-label="스팟팅 추이 차트"></canvas></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom:12px">스팟팅 병목 분석</h3>
+            <table class="tbl">
+              <thead><tr><th>지표</th><th>03/23</th><th>03/24</th><th>03/25</th></tr></thead>
+              <tbody>
+                <tr><td>부적합 건수</td><td>1,217</td><td>1,773</td><td style="font-weight:700;color:var(--negative)">2,573</td></tr>
+                <tr><td>스팟팅 진행</td><td>733</td><td>856</td><td style="font-weight:700">1,139</td></tr>
+                <tr><td>스팟팅 미진행</td><td>484</td><td>917</td><td style="font-weight:700;color:var(--negative)">1,434</td></tr>
+                <tr><td>스팟팅 진행률</td><td style="color:var(--positive)">60.2%</td><td style="color:var(--warning)">48.3%</td><td style="color:var(--negative);font-weight:700">44.3%</td></tr>
+              </tbody>
+            </table>
+            <div class="insight-box critical" style="margin-top:12px;">
+              <p style="font-size:13px;font-weight:700;color:var(--negative);margin-bottom:6px;">원인 추정: 스팟팅 인력/시간이 물량 증가를 따라가지 못함</p>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">3일간 부적합 건수 2.1배(1,217→2,573) 증가 vs 스팟팅 처리 1.55배(733→1,139) 증가. 갭이 벌어지면서 미처리 건이 484→1,434건으로 3배 증가. 스팟팅 미진행 건은 재세탁 or 그대로 출고 → 고객 불만 직결.</p>
+            </div>
+            <div class="insight-box ok" style="margin-top:8px;">
+              <p style="font-size:13px;font-weight:700;color:var(--positive);margin-bottom:6px;">권장 액션</p>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">물량 10,000건 이상 시 스팟팅 인력 1.5배 탄력 배치. 부적합 즉시 스팟팅 큐 자동 할당 시스템 도입. 스팟팅 처리율 60% 이상 KPI 목표 설정.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: Problem #3 — 3일 연속 악화 품목 -->
+      <section class="section reveal" aria-label="핵심 문제 3">
+        <div class="section-header">
+          <h2 class="section-title">핵심 문제 3 — 3일 연속 악화 품목</h2>
+          <span class="badge badge-amber">WORSENING</span>
+        </div>
+        <div class="card">
+          <p class="text-secondary" style="font-size:12px;margin-bottom:16px;">주요 9개 품목 중 개선된 품목 0개. 아래는 특히 악화가 심각한 품목.</p>
+          <div class="chart-wrap-tall"><canvas id="worseningChart" role="img" aria-label="3일 연속 악화 품목 추이"></canvas></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px;">
+          <div class="card">
+            <h3 style="color:var(--negative)">블라우스: 10.8→15.9→16.9%</h3>
+            <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.6;"><strong>원인 추정:</strong> 물량 2.5배 증가(120→307건)로 다양한 소재(실크, 쉬폰, 레이스) 유입. 소재별 프레스 온도/압력 최적화 미비. 드라이 블라우스 19.3% 부적합.<br><strong>액션:</strong> 블라우스 소재별 프레스 파라미터 가이드 작성. 실크/쉬폰 전용 프레스 표면 온도 70°C 이하 준수 확인.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:var(--negative)">티셔츠: 11.2→10.5→14.4%</h3>
+            <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.6;"><strong>원인 추정:</strong> 웨트 티셔츠 15.3%(재세탁 3.2%) 급등. 건수 3배(267→815건) 증가와 함께 다양한 프린트/자수 티셔츠 유입 추정. 건조 후 수축·변형이 주요 원인일 가능성.<br><strong>액션:</strong> 티셔츠 웨트 세탁 후 건조 온도 확인. 프린트 손상 체크포인트 추가.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:var(--negative)">후드티/맨투맨: 22.5→18.4→22.3%</h3>
+            <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.6;"><strong>원인 추정:</strong> 0324에 개선되었다가 0325에 다시 원래 수준 복귀. 일시적 개선이 지속되지 못한 것. 웨트 24.4%+재세탁 3.6%이 핵심.<br><strong>액션:</strong> 0324에 개선된 요인(특정 작업자 시프트? 세탁제 변경?) 역추적하여 표준화.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: Laundry Method x Category -->
+      <section class="section reveal" aria-label="중분류 x 세탁방법">
+        <div class="section-header">
+          <h2 class="section-title">중분류 × 세탁방법 부적합률</h2>
+          <span class="badge badge-blue">03/25</span>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <h3>중분류별 드라이 vs 웨트</h3>
+            <div class="chart-wrap"><canvas id="catMethodChart" role="img" aria-label="중분류x세탁방법 차트"></canvas></div>
+          </div>
+          <div class="card">
+            <h3>라이트 컬러(7-10) 딥다이브</h3>
+            <p class="text-secondary" style="font-size:12px;margin:6px 0 16px;">라이트 컬러 부적합률 3일 연속 상승: 16.7→16.8→18.3%</p>
+            <div class="chart-wrap"><canvas id="lightColorChart" role="img" aria-label="라이트 컬러 분석 차트"></canvas></div>
+            <div class="insight-box warn" style="margin-top:12px;">
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;"><strong style="color:var(--warning)">라이트+얼룩Y = 28.8%</strong> (전체 평균의 약 2배). 라이트+웨트 조합은 재세탁률도 3.5%로 높음. 밝은 색 의류의 얼룩 가시성이 QC 탈락에 큰 영향.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 6: Top 10 Worst Combos -->
+      <section class="section reveal" aria-label="고위험 조합">
+        <div class="section-header">
+          <h2 class="section-title">부적합률 High-Risk Top 12 (03/25)</h2>
+          <span class="badge badge-red">RANKING</span>
+        </div>
+        <div class="card">
+          <table class="tbl">
+            <thead><tr><th>#</th><th>품목</th><th>세탁</th><th>건수</th><th>부적합률</th><th>재세탁률</th><th>전일</th><th>추이</th></tr></thead>
+            <tbody id="rankBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 7: Root Cause Summary + Actions -->
+      <section class="section reveal" aria-label="종합 액션">
+        <div class="section-header">
+          <h2 class="section-title">근본 원인 진단 및 개선 로드맵</h2>
+          <span class="badge badge-green">ACTION PLAN</span>
+        </div>
+        <div class="card">
+          <table class="tbl">
+            <thead><tr><th>순위</th><th>근본 원인</th><th>영향 범위</th><th>개선 액션</th><th>기대 효과</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(228,29,72,.12);color:var(--negative)">P0</span></td>
+                <td style="font-weight:700">드라이 프리스팟팅 공정 부재</td>
+                <td>드라이+얼룩Y 816건 (38.6%)<br>전 품목 40% 내외 균등 부적합</td>
+                <td>드라이 라인 앞단에 스팟팅 스테이션 신설. 얼룩Y 태깅 품목은 반드시 프리스팟팅 경유 후 투입. 웨트 전처리 SOP를 드라이 버전으로 전환.</td>
+                <td>부적합률 약 18%p↓<br>(전체 2~3%p 개선)</td>
+              </tr>
+              <tr>
+                <td><span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(228,29,72,.12);color:var(--negative)">P0</span></td>
+                <td style="font-weight:700">스팟팅 처리 용량 부족</td>
+                <td>부적합 2,573건 중 1,434건 미처리<br>(처리율 44%→60% 목표 필요)</td>
+                <td>물량 연동 스팟팅 인력 탄력 배치(10K건 이상 시 1.5배). 부적합→스팟팅 자동 큐 시스템. 스팟팅 처리율 KPI 60% 이상.</td>
+                <td>미처리 건 50%↓<br>재세탁·고객 불만 감소</td>
+              </tr>
+              <tr>
+                <td><span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(228,29,72,.12);color:var(--negative)">P1</span></td>
+                <td style="font-weight:700">물량 증가 시 품질 저하 구조</td>
+                <td>3일간 물량 2.1배↑ 동안<br>개선 품목 0개, 악화 9개</td>
+                <td>작업자 1인당 처리량 상한 설정(물량 증가 시 인력 비례 투입). 시간대별 부적합률 모니터링 → 피로 시간대 교대/휴식 강화.</td>
+                <td>물량-품질 디커플링</td>
+              </tr>
+              <tr>
+                <td><span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(217,119,6,.12);color:var(--warning)">P2</span></td>
+                <td style="font-weight:700">하의(드라이) 프레싱 품질</td>
+                <td>바지 드라이 2,975건 (23.2%)<br>+얼룩Y 시 42.4%</td>
+                <td>바지 프레싱 5대 체크포인트(주름선·밑위·무릎·밑단·허리라인) 도입. 주 1회 프레싱 캘리브레이션 세션.</td>
+                <td>전체 부적합률 ~2%p↓</td>
+              </tr>
+              <tr>
+                <td><span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(217,119,6,.12);color:var(--warning)">P2</span></td>
+                <td style="font-weight:700">밝은색 의류 얼룩 관리</td>
+                <td>라이트(7-10)+얼룩Y: 28.8%<br>재세탁률 3.7%</td>
+                <td>밝은색+얼룩 접수 시 고객 사전 고지(완전 제거 한계). 전처리 이중 시도(1차 수성→2차 유성). 밝은색 전용 세탁제 채택.</td>
+                <td>고객 기대치 관리 + 실질 개선</td>
+              </tr>
+              <tr>
+                <td><span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(37,99,235,.12);color:var(--accent)">P3</span></td>
+                <td style="font-weight:700">QC 판정 기준 표준화</td>
+                <td>전체 15.3% 고착 (글로벌 1% 대비)</td>
+                <td>Major/Minor 결함 분리. 부적합 사유 코드 시스템 도입(현재 자유 메모). 판정자 간 월 1회 캘리브레이션. QC 전 스팟팅(현 0.1%) 활성화.</td>
+                <td>데이터 기반 개선 사이클 가동</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>데이터: QC 결과 데이터_0325.csv (16,792건) · 비교: 0324 (11,944건), 0323 (7,818건)</p>
+        <p style="margin-top:4px;">분석일: 2026.03.25</p>
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    function toggleMenu(){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.toggle('open')}
+    document.addEventListener('click',function(e){if(!e.target.closest('.viz-menu')){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.remove('open')}});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.remove('open')}});
+
+    var ChartManager={
+      charts:new Map(),
+      safeInit:function(id,cfg){if(typeof Chart==='undefined')return null;try{if(this.charts.has(id)){this.charts.get(id).destroy();this.charts.delete(id)}var c=document.getElementById(id);if(!c)return null;c.setAttribute('role','img');var ch=new Chart(c,cfg);this.charts.set(id,ch);return ch}catch(e){console.error(e);return null}},
+      destroyAll:function(){this.charts.forEach(function(c){try{c.destroy()}catch(e){}});this.charts.clear()}
+    };
+
+    var currentTheme='light';
+    function applyTheme(t){document.documentElement.className='theme-'+t;document.getElementById('themeIcon').textContent=t==='dark'?'🌙':'☀️';document.getElementById('themeLabel').textContent=t==='dark'?'다크':'라이트';currentTheme=t;if(typeof onThemeChange==='function'&&typeof ChartManager!=='undefined')onThemeChange()}
+    function cycleTheme(){applyTheme(currentTheme==='dark'?'light':'dark')}
+    applyTheme('light');
+
+    var ro=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');ro.unobserve(e.target)}})},{threshold:.1});
+    document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el)});
+
+    async function downloadImage(){var m=document.querySelector('.viz-menu');m.style.display='none';try{var u=await htmlToImage.toPng(document.body,{quality:1,pixelRatio:2});var a=document.createElement('a');a.href=u;a.download='qc-analysis-0325.png';a.click()}catch(e){}m.style.display=''}
+
+    function gc(){var dk=document.documentElement.classList.contains('theme-dark');return{text:dk?'#EDEDED':'#0f172a',sub:dk?'#888':'#64748b',grid:dk?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.06)'}}
+
+    // Ranking table
+    var rd=[
+      {name:'패딩',m:'드라이',n:59,r:28.81,rw:1.69,prev:24.44},
+      {name:'후드티·맨투맨',m:'웨트',n:447,r:24.38,rw:3.58,prev:21.18},
+      {name:'바지',m:'드라이',n:2975,r:23.16,rw:0.4,prev:24.13},
+      {name:'원피스·점프수트',m:'드라이',n:256,r:20.31,rw:0.39,prev:20.86},
+      {name:'정장재킷',m:'드라이',n:488,r:19.67,rw:0,prev:21.04},
+      {name:'블라우스',m:'드라이',n:223,r:19.28,rw:0.9,prev:18.62},
+      {name:'후드티·맨투맨',m:'드라이',n:226,r:18.14,rw:0.44,prev:13.69},
+      {name:'와이셔츠',m:'웨트',n:129,r:17.83,rw:0.78,prev:22.78},
+      {name:'재킷',m:'드라이',n:842,r:17.22,rw:0.12,prev:16.1},
+      {name:'패딩',m:'웨트',n:585,r:16.75,rw:1.54,prev:13.29},
+      {name:'코트·트렌치',m:'드라이',n:727,r:16.51,rw:0.83,prev:17.22},
+      {name:'티셔츠',m:'웨트',n:529,r:15.31,rw:3.21,prev:10.69}
+    ];
+    var tb=document.getElementById('rankBody');
+    rd.forEach(function(d,i){
+      var diff=(d.r-d.prev).toFixed(1);var cls=d.r>d.prev?'delta-up':d.r<d.prev?'delta-down':'delta-flat';
+      var arrow=d.r>d.prev?'▲ +'+Math.abs(diff)+'%p':d.r<d.prev?'▼ -'+Math.abs(diff)+'%p':'≈';
+      var mc=d.m==='드라이'?'#7c3aed':'#2563eb';var mb=d.m==='드라이'?'rgba(139,92,246,.12)':'rgba(37,99,235,.12)';
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td style="font-weight:700;color:var(--text-secondary)">'+(i+1)+'</td>'+
+        '<td style="font-weight:600">'+d.name+'</td>'+
+        '<td><span style="padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;background:'+mb+';color:'+mc+'">'+d.m+'</span></td>'+
+        '<td style="color:var(--text-secondary)">'+d.n.toLocaleString()+'</td>'+
+        '<td style="font-weight:700;color:'+(d.r>=20?'var(--negative)':d.r>=16?'var(--warning)':'var(--text)')+'">'+d.r+'%</td>'+
+        '<td style="color:'+(d.rw>=3?'var(--negative)':'var(--text-secondary)')+'">'+d.rw+'%</td>'+
+        '<td style="color:var(--text-secondary)">'+d.prev+'%</td>'+
+        '<td><span class="delta '+cls+'">'+arrow+'</span></td>';
+      tb.appendChild(tr);
+    });
+
+    // CHARTS
+    var chartsBuilt=false;
+    function buildCharts(){
+      if(chartsBuilt||typeof Chart==='undefined')return;
+      var c=gc();var days=['03/23','03/24','03/25'];
+
+      // 1. Trend line
+      ChartManager.safeInit('trendChart',{type:'line',data:{labels:days,datasets:[
+        {label:'전체',data:[15.57,14.84,15.32],borderColor:'#0f172a',backgroundColor:'rgba(15,23,42,0.1)',fill:true,tension:.3,pointRadius:5,borderWidth:2},
+        {label:'드라이',data:[16.46,16.48,16.68],borderColor:'#7c3aed',backgroundColor:'transparent',tension:.3,pointRadius:4,borderWidth:2,borderDash:[5,3]},
+        {label:'웨트',data:[13.16,11.33,12.65],borderColor:'#2563eb',backgroundColor:'transparent',tension:.3,pointRadius:4,borderWidth:2,borderDash:[5,3]}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:c.text,font:{size:12}}},tooltip:{enabled:true}},scales:{x:{ticks:{color:c.sub},grid:{color:c.grid}},y:{ticks:{color:c.sub,callback:function(v){return v+'%'}},grid:{color:c.grid},min:10,max:18}}}});
+
+      // 2. Cross trend
+      ChartManager.safeInit('crossTrendChart',{type:'line',data:{labels:days,datasets:[
+        {label:'드라이+얼룩Y',data:[35.64,35.77,38.6],borderColor:'#e11d48',backgroundColor:'rgba(225,29,72,0.08)',fill:true,tension:.3,pointRadius:5,borderWidth:2},
+        {label:'웨트+얼룩Y',data:[24.24,19.71,21.19],borderColor:'#f59e0b',tension:.3,pointRadius:4,borderWidth:2},
+        {label:'드라이+얼룩N',data:[14.71,14.87,14.95],borderColor:'#8b5cf6',tension:.3,pointRadius:4,borderWidth:2,borderDash:[5,3]},
+        {label:'웨트+얼룩N',data:[9.24,8.12,9.23],borderColor:'#10b981',tension:.3,pointRadius:4,borderWidth:2,borderDash:[5,3]}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:c.text,font:{size:11}}},tooltip:{enabled:true}},scales:{x:{ticks:{color:c.sub},grid:{color:c.grid}},y:{ticks:{color:c.sub,callback:function(v){return v+'%'}},grid:{color:c.grid},min:5,max:42}}}});
+
+      // 3. Dry+Stain items
+      ChartManager.safeInit('dryStainChart',{type:'bar',data:{
+        labels:['정장재킷','코트·트렌치','바지','가디건','원피스·점프','니트·스웨터','재킷','스커트','블라우스','후드티·맨투맨'],
+        datasets:[{label:'부적합률 (%)',data:[43.75,42.42,42.39,41.94,41.38,38.76,36.71,33.33,33.33,28.57],
+          backgroundColor:function(ctx){return ctx.raw>=40?'rgba(228,29,72,0.85)':'rgba(251,146,60,0.85)'},borderRadius:4}]
+      },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:true}},scales:{x:{ticks:{color:c.sub,callback:function(v){return v+'%'}},grid:{color:c.grid},max:50},y:{ticks:{color:c.sub,font:{size:11}},grid:{color:c.grid}}}}});
+
+      // 4. Spotting trend
+      ChartManager.safeInit('spottingTrendChart',{type:'bar',data:{labels:days,datasets:[
+        {label:'스팟팅 진행',data:[733,856,1139],backgroundColor:'rgba(5,150,105,0.7)',borderRadius:6},
+        {label:'스팟팅 미진행',data:[484,917,1434],backgroundColor:'rgba(228,29,72,0.5)',borderRadius:6}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:c.text}},tooltip:{enabled:true}},scales:{x:{stacked:true,ticks:{color:c.sub},grid:{color:c.grid}},y:{stacked:true,ticks:{color:c.sub},grid:{color:c.grid}}}}});
+
+      // 5. Worsening items grouped bar
+      ChartManager.safeInit('worseningChart',{type:'bar',data:{
+        labels:['블라우스','티셔츠','가디건','니트·스웨터','일반셔츠','후드티·맨투맨','패딩','롱패딩점퍼','재킷'],
+        datasets:[
+          {label:'03/23',data:[10.83,11.24,9.01,11.89,6.87,22.5,17.65,10.81,12.85],backgroundColor:'rgba(148,163,184,0.3)',borderRadius:4},
+          {label:'03/24',data:[15.92,10.47,11.05,12.12,7.13,18.42,14.8,10.0,12.27],backgroundColor:'rgba(148,163,184,0.55)',borderRadius:4},
+          {label:'03/25',data:[16.94,14.36,11.92,12.91,8.06,22.29,17.86,13.98,13.38],backgroundColor:function(ctx){var v=ctx.raw;return v>=20?'rgba(228,29,72,0.85)':v>=15?'rgba(251,146,60,0.85)':v>=10?'rgba(37,99,235,0.7)':'rgba(5,150,105,0.7)'},borderRadius:4}
+        ]
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:c.text,font:{size:11}}},tooltip:{enabled:true}},scales:{x:{ticks:{color:c.sub,font:{size:10}},grid:{color:c.grid}},y:{ticks:{color:c.sub,callback:function(v){return v+'%'}},grid:{color:c.grid},max:26}}}});
+
+      // 6. Category x Method
+      ChartManager.safeInit('catMethodChart',{type:'bar',data:{
+        labels:['상의','하의','아우터','셔츠','즐겨찾기'],
+        datasets:[
+          {label:'드라이',data:[13.55,22.47,17.95,10.38,16.68],backgroundColor:'rgba(139,92,246,0.7)',borderRadius:6},
+          {label:'웨트',data:[14.69,12.65,16.01,8.36,13.41],backgroundColor:'rgba(37,99,235,0.6)',borderRadius:6}
+        ]
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:c.text}},tooltip:{enabled:true}},scales:{x:{ticks:{color:c.sub},grid:{color:c.grid}},y:{ticks:{color:c.sub,callback:function(v){return v+'%'}},grid:{color:c.grid},max:26}}}});
+
+      // 7. Light color
+      ChartManager.safeInit('lightColorChart',{type:'bar',data:{
+        labels:['라이트 전체','드라이','웨트','얼룩Y','얼룩N'],
+        datasets:[{label:'부적합률',data:[18.3,17.74,18.98,28.82,14.68],
+          backgroundColor:['#94a3b8','rgba(139,92,246,0.7)','rgba(37,99,235,0.6)','rgba(228,29,72,0.8)','rgba(5,150,105,0.7)'],borderRadius:6},
+          {label:'재세탁률',data:[2.02,0.82,3.46,3.71,1.44],backgroundColor:['rgba(228,29,72,0.2)','rgba(228,29,72,0.15)','rgba(228,29,72,0.3)','rgba(228,29,72,0.4)','rgba(228,29,72,0.1)'],borderRadius:6}]
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:c.text,font:{size:11}}},tooltip:{enabled:true}},scales:{x:{ticks:{color:c.sub,font:{size:10}},grid:{color:c.grid}},y:{ticks:{color:c.sub,callback:function(v){return v+'%'}},grid:{color:c.grid},max:34}}}});
+
+      chartsBuilt=true;
+    }
+    function onThemeChange(){chartsBuilt=false;if(ChartManager)ChartManager.destroyAll();buildCharts()}
+    window.addEventListener('load',function(){buildCharts()});
+  </script>
+</body>
+</html>
