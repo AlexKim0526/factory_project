@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QC 종합분석 & 세탁 SOP | 4.14~16</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0f4f8;color:#1a2332;}
+
+.header{background:linear-gradient(135deg,#0a1628 0%,#1a3455 50%,#0d5c8c 100%);color:white;padding:44px 52px 36px;}
+.header-eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#7eb8e8;margin-bottom:10px;}
+.header h1{font-size:28px;font-weight:800;margin-bottom:8px;}
+.header-sub{font-size:14px;color:#aecde8;line-height:1.7;}
+.header-kpis{display:flex;flex-wrap:wrap;gap:14px;margin-top:24px;}
+.hkpi{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:12px 18px;min-width:130px;}
+.hkpi-v{font-size:22px;font-weight:800;}
+.hkpi-l{font-size:11px;color:#aecde8;margin-top:2px;}
+
+.nav{background:white;border-bottom:2px solid #e8edf2;position:sticky;top:0;z-index:100;padding:0 32px;}
+.nav ul{display:flex;list-style:none;overflow-x:auto;gap:0;}
+.nav li a{display:block;padding:14px 16px;font-size:13px;font-weight:600;color:#8898aa;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;}
+.nav li a:hover,.nav li a.active{color:#0d5c8c;border-bottom-color:#0d5c8c;}
+
+.container{max-width:1280px;margin:0 auto;padding:32px 24px;}
+.sec-anchor{display:block;padding-top:80px;margin-top:-80px;}
+
+.sec-hdr{margin-bottom:22px;}
+.sec-num{font-size:11px;font-weight:800;color:#0d5c8c;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.sec-title{font-size:22px;font-weight:800;color:#1a2332;}
+.sec-desc{font-size:13px;color:#8898aa;margin-top:4px;line-height:1.6;}
+
+.card{background:white;border-radius:14px;padding:26px;box-shadow:0 2px 12px rgba(0,0,0,0.07);margin-bottom:20px;}
+.card-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+.card-sub{font-size:12px;color:#8898aa;margin-bottom:18px;}
+.cw{position:relative;height:260px;}
+.cw.md{height:320px;}
+.cw.lg{height:400px;}
+.cw.xl{height:480px;}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;}
+
+/* FUNNEL */
+.funnel{display:flex;flex-direction:column;gap:0;align-items:center;padding:20px 0;}
+.fn-step{width:100%;max-width:600px;display:flex;flex-direction:column;align-items:center;}
+.fn-box{width:100%;padding:16px 24px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
+.fn-arrow{font-size:20px;color:#aab;margin:2px 0;}
+.fn-label{font-size:14px;font-weight:700;}
+.fn-val{font-size:20px;font-weight:800;}
+.fn-pct{font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;}
+.fn-1{background:#e8f4fd;} .fn-1 .fn-label{color:#1a6fb5;} .fn-1 .fn-val{color:#0d5c8c;}
+.fn-2{background:#fff3cd;} .fn-2 .fn-label{color:#856404;} .fn-2 .fn-val{color:#664d03;}
+.fn-3{background:#fde8e8;} .fn-3 .fn-label{color:#842029;} .fn-3 .fn-val{color:#6e1d25;}
+.fn-4{background:#d1f0e0;} .fn-4 .fn-label{color:#155724;} .fn-4 .fn-val{color:#0d3d1c;}
+.fn-5{background:#f8d7da;} .fn-5 .fn-label{color:#721c24;} .fn-5 .fn-val{color:#491217;}
+
+/* INSIGHT */
+.ins{border-radius:12px;padding:16px 20px;font-size:13px;line-height:1.8;margin-top:14px;}
+.ins.blue{background:#eef5ff;border-left:4px solid #4a90d9;}
+.ins.red{background:#fff5f5;border-left:4px solid #e05c5c;}
+.ins.green{background:#f0faf5;border-left:4px solid #3cb07e;}
+.ins.orange{background:#fff8e1;border-left:4px solid #f0a500;}
+.ins.purple{background:#f5f0ff;border-left:4px solid #7b2fbe;}
+.ins strong{color:#1a2332;}
+.hi{background:#ffe066;padding:1px 5px;border-radius:3px;font-weight:700;}
+
+/* HEATMAP */
+.hm{border-collapse:collapse;width:100%;font-size:12px;}
+.hm th{background:#f5f7fa;padding:9px 10px;font-size:11px;color:#6b7a8d;font-weight:700;text-align:center;border:1px solid #e8edf2;}
+.hm td{padding:9px 10px;text-align:center;border:1px solid #e8edf2;font-weight:600;font-size:12px;}
+
+/* TABLE */
+.dt{width:100%;border-collapse:collapse;font-size:13px;}
+.dt thead th{background:#1a3455;color:white;padding:11px 13px;font-size:11px;font-weight:700;text-align:left;letter-spacing:0.3px;}
+.dt tbody td{padding:10px 13px;border-bottom:1px solid #f0f4f8;vertical-align:middle;}
+.dt tbody tr:last-child td{border-bottom:none;}
+.dt tbody tr:hover{background:#f8fafc;}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;margin:1px;}
+.t-r{background:#fde8e8;color:#c0392b;}
+.t-o{background:#fff3cd;color:#856404;}
+.t-b{background:#e8f4fd;color:#1a6fb5;}
+.t-g{background:#d1f0e0;color:#155724;}
+.t-p{background:#f0e8ff;color:#6b2fa0;}
+.bbar{height:8px;border-radius:4px;display:inline-block;}
+
+/* SOP CARDS */
+.sop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.sop-card{background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.07);}
+.sop-head{padding:16px 20px 14px;}
+.sop-risk-vhigh .sop-head{background:linear-gradient(135deg,#8b1a1a,#c0392b);}
+.sop-risk-high .sop-head{background:linear-gradient(135deg,#7d4200,#e67e22);}
+.sop-risk-mid .sop-head{background:linear-gradient(135deg,#1a4a7d,#2980b9);}
+.sop-risk-low .sop-head{background:linear-gradient(135deg,#155724,#27ae60);}
+.sop-item-name{font-size:16px;font-weight:800;color:white;margin-bottom:2px;}
+.sop-risk-badge{font-size:11px;color:rgba(255,255,255,0.8);font-weight:600;}
+.sop-stats{display:flex;gap:12px;margin-top:10px;}
+.sop-stat{background:rgba(255,255,255,0.15);border-radius:8px;padding:6px 12px;text-align:center;}
+.sop-stat-v{font-size:16px;font-weight:800;color:white;}
+.sop-stat-l{font-size:10px;color:rgba(255,255,255,0.75);}
+.sop-body{padding:16px 20px;}
+.sop-step{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
+.sop-step-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;margin-top:1px;}
+.sop-risk-vhigh .sop-step-num{background:#fde8e8;color:#c0392b;}
+.sop-risk-high  .sop-step-num{background:#fff3cd;color:#856404;}
+.sop-risk-mid   .sop-step-num{background:#e8f4fd;color:#1a6fb5;}
+.sop-risk-low   .sop-step-num{background:#d1f0e0;color:#155724;}
+.sop-step-txt{font-size:12px;line-height:1.6;color:#3a4a5a;}
+.sop-step-txt strong{color:#1a2332;}
+.sop-warn{background:#fff8e1;border-radius:8px;padding:8px 12px;font-size:11px;color:#664d03;margin-top:10px;line-height:1.6;}
+
+.flow-strip{display:flex;align-items:center;gap:0;background:white;border-radius:14px;padding:24px;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,0.07);overflow-x:auto;}
+.flow-node{text-align:center;min-width:100px;}
+.flow-node-box{border-radius:10px;padding:14px 12px;margin:0 4px;}
+.flow-node-num{font-size:24px;font-weight:900;line-height:1;}
+.flow-node-lbl{font-size:11px;font-weight:600;margin-top:4px;line-height:1.3;}
+.flow-node-sub{font-size:10px;opacity:0.75;margin-top:2px;}
+.flow-arrow{font-size:28px;color:#d0d8e0;margin:0 2px;flex-shrink:0;}
+.fn-total{background:#e8f4fd;color:#0d5c8c;}
+.fn-stain{background:#fde8e8;color:#c0392b;}
+.fn-pass{background:#d1f0e0;color:#155724;}
+.fn-spot{background:#fff3cd;color:#856404;}
+.fn-spot-ok{background:#d1f0e0;color:#155724;}
+.fn-spot-fail{background:#fde8e8;color:#c0392b;}
+
+.footer{text-align:center;font-size:12px;color:#aab;padding:28px;}
+@media(max-width:900px){.g2,.g3,.sop-grid{grid-template-columns:1fr;}.header-kpis{flex-wrap:wrap;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">세탁결벽주의 TF · 군포 팩토리 · QC 데이터 분석</div>
+  <h1>QC 종합분석 & 세탁 SOP 가이드</h1>
+  <div class="header-sub">세탁 전 얼룩 체크 → 세탁 후 QC 검사 → 스파팅(후처리) 3공정 연계 분석 | 2026년 4월 14~16일</div>
+  <div class="header-kpis">
+    <div class="hkpi"><div class="hkpi-v">6,493</div><div class="hkpi-l">총 분석 건수</div></div>
+    <div class="hkpi"><div class="hkpi-v">505건 (7.8%)</div><div class="hkpi-l">세탁전 얼룩 발견</div></div>
+    <div class="hkpi"><div class="hkpi-v">737건 (12.1%)</div><div class="hkpi-l">QC 부적합</div></div>
+    <div class="hkpi"><div class="hkpi-v">788건</div><div class="hkpi-l">스파팅 진행</div></div>
+    <div class="hkpi"><div class="hkpi-v">86건 (10.9%)</div><div class="hkpi-l">스파팅 실패 (못지움)</div></div>
+  </div>
+</div>
+
+<nav class="nav">
+  <ul>
+    <li><a href="#flow">① 전체 공정 흐름</a></li>
+    <li><a href="#stain">② 얼룩 다발 조건</a></li>
+    <li><a href="#qc">③ QC 부적합 분석</a></li>
+    <li><a href="#spot">④ 스파팅 분석</a></li>
+    <li><a href="#hard">⑤ 제거 어려운 조건</a></li>
+    <li><a href="#easy">⑥ 제거 잘 되는 조건</a></li>
+    <li><a href="#sop">⑦ 품목별 SOP</a></li>
+  </ul>
+</nav>
+
+<div class="container">
+
+<!-- ① 전체 공정 흐름 -->
+<span class="sec-anchor" id="flow"></span>
+<div style="margin-bottom:36px;">
+  <div class="sec-hdr">
+    <div class="sec-num">SECTION 01</div>
+    <div class="sec-title">전체 공정 흐름 및 얼룩 추적</div>
+    <div class="sec-desc">세탁 전 → QC → 스파팅 3단계를 통한 얼룩 505건의 처리 결과 추적</div>
+  </div>
+
+  <div class="flow-strip">
+    <div class="flow-node">
+      <div class="flow-node-box fn-total">
+        <div class="flow-node-num">6,493</div>
+        <div class="flow-node-lbl">총 접수</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-node-box fn-stain">
+        <div class="flow-node-num">505</div>
+        <div class="flow-node-lbl">세탁전 얼룩 발견</div>
+        <div class="flow-node-sub">전체 7.8%</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-node-box fn-pass">
+        <div class="flow-node-num">299</div>
+        <div class="flow-node-lbl">세탁 후 QC 통과</div>
+        <div class="flow-node-sub">세탁만으로 제거 59.2%</div>
+      </div>
+    </div>
+    <div class="flow-arrow">+</div>
+    <div class="flow-node">
+      <div class="flow-node-box fn-spot">
+        <div class="flow-node-num">145</div>
+        <div class="flow-node-lbl">스파팅 진행</div>
+        <div class="flow-node-sub">QC 부적합 → 후처리</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-node-box fn-spot-ok">
+        <div class="flow-node-num">112</div>
+        <div class="flow-node-lbl">스파팅 성공</div>
+        <div class="flow-node-sub">스파팅 성공률 77.2%</div>
+      </div>
+    </div>
+    <div class="flow-arrow">+</div>
+    <div class="flow-node">
+      <div class="flow-node-box fn-spot-fail">
+        <div class="flow-node-num">32</div>
+        <div class="flow-node-lbl">제거 불가</div>
+        <div class="flow-node-sub">얼룩Y 중 6.3%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">세탁방법별 분포</div>
+      <div class="card-sub">드라이 80%, 웨트 18.4%, NO_JUDGEMENT 1.5%</div>
+      <div class="cw"><canvas id="methodChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">공정별 처리 결과 요약</div>
+      <div class="card-sub">얼룩Y 505건의 단계별 흐름</div>
+      <div class="cw"><canvas id="flowChart"></canvas></div>
+    </div>
+  </div>
+  <div class="ins blue">
+    <strong>공정 요약:</strong> 세탁전 얼룩 발견 <strong>505건 중 59.2%(299건)</strong>은 세탁(드라이/웨트) 만으로 제거됐습니다.
+    나머지 <strong>28.7%(145건)</strong>은 스파팅 후처리가 진행됐고, 그 중 77.2%(112건) 추가 제거 성공.
+    결국 얼룩Y 중 <strong>최종 제거 불가는 6.3%(32건)</strong>으로 나타났습니다.
+  </div>
+</div>
+
+<!-- ② 얼룩 다발 조건 -->
+<span class="sec-anchor" id="stain"></span>
+<div style="margin-bottom:36px;">
+  <div class="sec-hdr">
+    <div class="sec-num">SECTION 02</div>
+    <div class="sec-title">① 어떤 조건에서 얼룩이 가장 많이 발견되는가?</div>
+    <div class="sec-desc">세탁 전 얼룩 체크 기준 — 품목·세탁방법·색상 3가지 요인 분석</div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">품목별 세탁전 얼룩 발생률</div>
+      <div class="card-sub">20건 이상 접수 품목 기준 (얼룩율 내림차순)</div>
+      <div class="cw lg"><canvas id="stainItemChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">세탁방법별 + 밝기구간별 얼룩율</div>
+      <div class="card-sub">웨트 > 드라이 | 화이트계 > 블랙계</div>
+      <div class="cw md"><canvas id="stainCondChart"></canvas></div>
+      <div style="margin-top:12px;">
+        <div class="cw" style="height:130px;"><canvas id="stainBrightChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="ins red">
+    <strong>얼룩 다발 TOP 3 조건:</strong><br>
+    ① <span class="hi">일반셔츠 드라이</span> 23.5% — 4개 중 1개 얼룩<br>
+    ② <span class="hi">패딩 드라이</span> 35.1% — 3개 중 1개 이상 얼룩 (최고!)<br>
+    ③ <span class="hi">후드티/맨투맨 드라이</span> 14.8% + <span class="hi">화이트계 색상</span> 13.3%<br>
+    ④ 웨트 세탁 의뢰 품목 전체 얼룩율 <strong>13.2%</strong> — 드라이(6.5%)의 2배
+  </div>
+</div>
+
+<!-- ③ QC 부적합 분석 -->
+<span class="sec-anchor" id="qc"></span>
+<div style="margin-bottom:36px;">
+  <div class="sec-hdr">
+    <div class="sec-num">SECTION 03</div>
+    <div class="sec-title">세탁 후 QC 결과 분석</div>
+    <div class="sec-desc">세탁 후 품질검사 부적합 조건 — 총 6,093건 QC 중 737건(12.1%) 부적합</div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">품목별 QC 부적합율</div>
+      <div class="card-sub">20건 이상 기준 | 바지·정장재킷·원피스 순</div>
+      <div class="cw lg"><canvas id="qcItemChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">세탁방법별 QC 부적합율</div>
+      <div class="card-sub">웨트 19.3% vs 드라이 10.5% — 약 2배 차이</div>
+      <div class="cw" style="height:180px;"><canvas id="qcMethodChart"></canvas></div>
+      <div class="card-title" style="margin-top:16px;font-size:14px;">세탁전 얼룩 유무 × QC 부적합율</div>
+      <div class="card-sub">얼룩Y → QC 부적합 27.1% (얼룩N 11.0%의 2.5배)</div>
+      <div class="cw" style="height:130px;"><canvas id="qcStainChart"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">밝기구간별 QC 부적합율</div>
+      <div class="card-sub">블랙계·화이트계 양쪽 끝에서 부적합율 높은 패턴</div>
+      <div class="cw"><canvas id="qcBrightChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">QC 작업자별 부적합율</div>
+      <div class="card-sub">작업자 간 편차 큼 (4% ~ 54%) — 검수 기준 표준화 필요</div>
+      <div class="cw"><canvas id="qcWorkerChart"></canvas></div>
+    </div>
+  </div>
+  <div class="ins orange">
+    <strong>QC 작업자 편차 주목:</strong> 임휘랑 작업자의 부적합율이 <strong>54.4%</strong>로 타 작업자 평균(~10%) 대비 5배 이상.
+    이지윤(4.0%), 박진우(5.0%)와의 격차는 검수 기준의 <strong>개인 편차 또는 담당 품목 차이</strong>에서 기인할 수 있어 기준 표준화 검토 필요.
+  </div>
+</div>
+
+<!-- ④ 스파팅 분석 -->
+<span class="sec-anchor" id="spot"></span>
+<div style="margin-bottom:36px;">
+  <div class="sec-hdr">
+    <div class="sec-num">SECTION 04</div>
+    <div class="sec-title">스파팅(후처리) 결과 분석</div>
+    <div class="sec-desc">QC 부적합 이후 스파팅 진행 788건 — 품질검사 적합 694건 / 못지움 86건 / 2차필요 8건</div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">품목별 스파팅 제거불가율</div>
+      <div class="card-sub">5건 이상 기준 | 머플러·스카프·원피스·후드티 순</div>
+      <div class="cw lg"><canvas id="spotItemChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">밝기구간 × 세탁방법별 스파팅 못지움율</div>
+      <div class="card-sub">화이트계 웨트 66.7%로 최악 — 밝은 색상 웨트 세탁 후 스파팅 효과 낮음</div>
+      <div style="overflow-x:auto;margin-top:4px;">
+        <table class="hm" id="spotHm"></table>
+      </div>
+      <div class="cw md" style="margin-top:16px;"><canvas id="spotBrightChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑤ 제거 어려운 조건 -->
+<span class="sec-anchor" id="hard"></span>
+<div style="margin-bottom:36px;">
+  <div class="sec-hdr">
+    <div class="sec-num">SECTION 05</div>
+    <div class="sec-title">② 어떤 조건의 얼룩이 가장 제거하기 어려운가?</div>
+    <div class="sec-desc">QC 부적합 + 스파팅 실패 복합 분석</div>
+  </div>
+  <div class="card">
+    <div class="card-title">제거 난이도 종합 위험 매트릭스</div>
+    <div class="card-sub">색이 진할수록 얼룩 제거가 어려움 (QC부적합율 + 스파팅실패율 복합 지수)</div>
+    <div style="overflow-x:auto;">
+      <table class="hm" id="hardHm"></table>
+    </div>
+  </div>
+  <div class="ins red">
+    <strong>제거 가장 어려운 TOP 조건:</strong><br>
+    ① <span class="hi">화이트계 × 웨트 세탁</span> — 스파팅 못지움율 66.7% (최악)<br>
+    ② <span class="hi">미드계(4-6) × 드라이</span> — 스파팅 못지움율 24.2%<br>
+    ③ <span class="hi">머플러·스카프</span> — 스파팅 제거불가율 40%, 소재 특성상 화학 처리 제한<br>
+    ④ <span class="hi">원피스·점프수트</span> — 스파팅 못지움율 27.3%, 복합 소재 특성<br>
+    ⑤ <span class="hi">세탁전 얼룩Y 이력</span> — QC 부적합율이 얼룩N 대비 2.5배
+  </div>
+</div>
+
+<!-- ⑥ 제거 잘 되는 조건 -->
+<span class="sec-anchor" id="easy"></span>
+<div style="margin-bottom:36px;">
+  <div class="sec-hdr">
+    <div class="sec-num">SECTION 06</div>
+    <div class="sec-title">③ 어떤 조건의 얼룩이 가장 잘 지워지는가?</div>
+    <div class="sec-desc">스파팅 성공률 90% 이상 고성공 조건 분석</div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">품목별 스파팅 성공률 (제거됨)</div>
+      <div class="card-sub">롱패딩점퍼 100%, 정장재킷 97.4%, 바지 91.9%</div>
+      <div class="cw lg"><canvas id="easyChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">제거 용이 조건 요약</div>
+      <div class="card-sub">공통 특성 — 표면 소재 단순 / 어두운 색상 / 드라이 세탁</div>
+      <table class="dt">
+        <thead><tr><th>품목</th><th>스파팅 성공률</th><th>특성</th></tr></thead>
+        <tbody>
+          <tr><td><strong>롱패딩점퍼</strong></td><td style="color:#155724;font-weight:800">100%</td><td><span class="tag t-g">최우수</span> 나일론 표면, 단일 소재</td></tr>
+          <tr><td><strong>정장재킷</strong></td><td style="color:#155724;font-weight:800">97.4%</td><td><span class="tag t-g">최우수</span> 드라이크리닝 전용</td></tr>
+          <tr><td><strong>바지</strong></td><td style="color:#2980b9;font-weight:800">91.9%</td><td><span class="tag t-b">우수</span> 면/혼방, 표면 흡수력</td></tr>
+          <tr><td><strong>재킷</strong></td><td style="color:#2980b9;font-weight:800">91.1%</td><td><span class="tag t-b">우수</span> 드라이 대응 소재</td></tr>
+          <tr><td><strong>와이셔츠</strong></td><td style="color:#2980b9;font-weight:800">91.7%</td><td><span class="tag t-b">우수</span> 면 소재, 스팟팅 효과 좋음</td></tr>
+          <tr><td><strong>블랙계 색상</strong></td><td style="color:#2980b9;font-weight:800">93.1%</td><td><span class="tag t-b">우수</span> 어두운 색상 스파팅 효과 높음</td></tr>
+          <tr><td><strong>다크계 색상</strong></td><td style="color:#2980b9;font-weight:800">92.2%</td><td><span class="tag t-b">우수</span> 드라이 세탁과 시너지</td></tr>
+          <tr><td><strong>드라이 세탁</strong></td><td style="color:#856404;font-weight:800">~89%</td><td><span class="tag t-o">양호</span> 전용 용제 사용, 안정적</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="ins green">
+    <strong>제거 용이 공통 조건:</strong>
+    ① 어두운 색상(블랙/다크계): 스파팅 성공률 92~93% — 얼룩 자체도 적고 제거도 잘 됨
+    ② 드라이 세탁 단독 소재(정장류, 롱패딩): 용제 선택이 명확해 스파팅 효율 최대화
+    ③ 단일 소재 의류: 복합 소재 대비 화학 반응 예측 가능, 처리 용이
+  </div>
+</div>
+
+<!-- ⑦ 세탁 SOP -->
+<span class="sec-anchor" id="sop"></span>
+<div style="margin-bottom:36px;">
+  <div class="sec-hdr">
+    <div class="sec-num">SECTION 07</div>
+    <div class="sec-title">④ 품목별 상세 세탁 SOP</div>
+    <div class="sec-desc">데이터 기반 품목·색상·얼룩 조건별 표준 운영 절차</div>
+  </div>
+
+  <!-- 공통 판단 기준 -->
+  <div class="card" style="background:linear-gradient(135deg,#0a1628,#1a3455);color:white;margin-bottom:24px;">
+    <div style="font-size:16px;font-weight:800;margin-bottom:16px;">📌 세탁 전 공통 판단 기준 (모든 품목 적용)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:13px;line-height:1.8;">
+      <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
+        <div style="color:#7eb8e8;font-weight:700;margin-bottom:8px;">🔍 STEP 1 — 색상 밝기 확인</div>
+        <div style="color:#dde8f5;">밝기 8 이상 (화이트계)<br>→ <strong style="color:#ff9999">최우선 얼룩 확인</strong><br><br>밝기 6~8 (라이트계)<br>→ <strong style="color:#ffcc66">얼룩 확인 필요</strong><br><br>밝기 0~6 (어두운계열)<br>→ 표준 확인</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
+        <div style="color:#7eb8e8;font-weight:700;margin-bottom:8px;">👕 STEP 2 — 품목 위험도 확인</div>
+        <div style="color:#dde8f5;"><strong style="color:#ff9999">최고위험:</strong> 패딩·일반셔츠<br>→ 전체 표면 상세 검수<br><br><strong style="color:#ffcc66">고위험:</strong> 후드티·티셔츠·바지<br>→ 주요 오염부위 집중 확인<br><br><strong style="color:#a8d8ff">저위험:</strong> 니트·코트·머플러<br>→ 표준 검수</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
+        <div style="color:#7eb8e8;font-weight:700;margin-bottom:8px;">⚡ STEP 3 — 세탁방법 결정</div>
+        <div style="color:#dde8f5;">얼룩Y + 화이트계<br>→ <strong style="color:#ff9999">드라이 우선 권장</strong><br>(웨트 스파팅 성공률 낮음)<br><br>얼룩Y + 드라이<br>→ 세탁 후 스파팅 예약<br><br>얼룩N + 어두운 색상<br>→ 표준 세탁 진행</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOP 카드들 -->
+  <div class="sop-grid">
+
+    <!-- 패딩 -->
+    <div class="sop-card sop-risk-vhigh">
+      <div class="sop-head">
+        <div class="sop-item-name">패딩 · 롱패딩점퍼</div>
+        <div class="sop-risk-badge">최고위험 · 얼룩율 21~35%</div>
+        <div class="sop-stats">
+          <div class="sop-stat"><div class="sop-stat-v">21~35%</div><div class="sop-stat-l">세탁전 얼룩율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">5~20%</div><div class="sop-stat-l">QC 부적합율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">0~17%</div><div class="sop-stat-l">스파팅 실패율</div></div>
+        </div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-step"><div class="sop-step-num">1</div><div class="sop-step-txt"><strong>접수 즉시 전면 얼룩 검수</strong>: 목·소매·가슴 부위 중점, 화이트계는 전체 라이트 검사 필수</div></div>
+        <div class="sop-step"><div class="sop-step-num">2</div><div class="sop-step-txt"><strong>색상 확인 후 세탁방법 결정</strong>: 화이트계(밝기 8+) → 드라이 우선. 드라이 불가 소재만 웨트 (웨트 시 화이트계 스파팅 실패율 급등)</div></div>
+        <div class="sop-step"><div class="sop-step-num">3</div><div class="sop-step-txt"><strong>얼룩 발견 시 스파팅 예약 등록</strong>: 드라이 세탁 후 스파팅 성공률 80~100% — 사전 등록으로 처리 누락 방지</div></div>
+        <div class="sop-step"><div class="sop-step-num">4</div><div class="sop-step-txt"><strong>롱패딩점퍼</strong>: 스파팅 성공률 100% — 얼룩 있어도 드라이+스파팅으로 해결 가능. 고객 불안 최소화 안내</div></div>
+        <div class="sop-warn">⚠ 화이트계 패딩 웨트 세탁 후 스파팅 실패 시 → 2차 스파팅 전 고객 협의 필수</div>
+      </div>
+    </div>
+
+    <!-- 셔츠류 -->
+    <div class="sop-card sop-risk-vhigh">
+      <div class="sop-head">
+        <div class="sop-item-name">일반셔츠 · 와이셔츠</div>
+        <div class="sop-risk-badge">최고위험 · 얼룩율 23~24%</div>
+        <div class="sop-stats">
+          <div class="sop-stat"><div class="sop-stat-v">23~24%</div><div class="sop-stat-l">세탁전 얼룩율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">6~11%</div><div class="sop-stat-l">QC 부적합율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">8~15%</div><div class="sop-stat-l">스파팅 실패율</div></div>
+        </div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-step"><div class="sop-step-num">1</div><div class="sop-step-txt"><strong>목·소매·가슴 3개 부위 집중 검수</strong>: 음식·땀·화장품 오염 집중 발생 부위, 형광등 아래 역광 확인</div></div>
+        <div class="sop-step"><div class="sop-step-num">2</div><div class="sop-step-txt"><strong>와이셔츠 흰색(화이트계)</strong>: 황변 여부도 동시 확인. 황변은 스파팅이 아닌 별도 처리 프로세스 적용</div></div>
+        <div class="sop-step"><div class="sop-step-num">3</div><div class="sop-step-txt"><strong>얼룩 확인 시 유형 파악</strong>: 기름/음식 오염 → 드라이 용제 선 처리. 수용성(커피·주스) → 웨트 전 처리 후 드라이 고려</div></div>
+        <div class="sop-step"><div class="sop-step-num">4</div><div class="sop-step-txt"><strong>와이셔츠 스파팅 성공률 91.7%</strong>: 발견 즉시 스파팅 예약, 세탁 후 추가 처리로 대부분 해결 가능</div></div>
+        <div class="sop-warn">⚠ 오래된 유성 얼룩(기름때) → 드라이 2회 처리 또는 전용 용제 신청</div>
+      </div>
+    </div>
+
+    <!-- 캐주얼 상의 -->
+    <div class="sop-card sop-risk-vhigh">
+      <div class="sop-head">
+        <div class="sop-item-name">티셔츠 · 후드티/맨투맨</div>
+        <div class="sop-risk-badge">최고위험 · 얼룩율 10~15%</div>
+        <div class="sop-stats">
+          <div class="sop-stat"><div class="sop-stat-v">10~15%</div><div class="sop-stat-l">세탁전 얼룩율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">8~13%</div><div class="sop-stat-l">QC 부적합율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">16~19%</div><div class="sop-stat-l">스파팅 실패율</div></div>
+        </div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-step"><div class="sop-step-num">1</div><div class="sop-step-txt"><strong>화이트/라이트계 우선 집중 검수</strong>: 흰색·밝은 계열 티셔츠 얼룩율 30%↑, 소매·목 부위 중점</div></div>
+        <div class="sop-step"><div class="sop-step-num">2</div><div class="sop-step-txt"><strong>프린트·자수 부위 주의</strong>: 프린트 주변 오염 스파팅 시 손상 위험 → 검수 후 별도 표기</div></div>
+        <div class="sop-step"><div class="sop-step-num">3</div><div class="sop-step-txt"><strong>소재 확인 필수</strong>: 폴리에스터 혼방 → 웨트 가능. 면 100% → 웨트 또는 드라이 선택적 적용</div></div>
+        <div class="sop-step"><div class="sop-step-num">4</div><div class="sop-step-txt"><strong>스파팅 실패율 16~19%로 상대적으로 높음</strong>: 세탁전 얼룩 발견 시 고객에게 제거 불확실 가능성 사전 안내 권장</div></div>
+        <div class="sop-warn">⚠ 흰색 후드티 + 인쇄 로고: 스파팅 용제가 로고에 영향 줄 수 있어 비로고 부위만 처리</div>
+      </div>
+    </div>
+
+    <!-- 바지 -->
+    <div class="sop-card sop-risk-high">
+      <div class="sop-head">
+        <div class="sop-item-name">바지 · 스커트</div>
+        <div class="sop-risk-badge">고위험 (건수 최다) · 얼룩율 8~11%</div>
+        <div class="sop-stats">
+          <div class="sop-stat"><div class="sop-stat-v">8~11%</div><div class="sop-stat-l">세탁전 얼룩율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">7~21%</div><div class="sop-stat-l">QC 부적합율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">7~15%</div><div class="sop-stat-l">스파팅 실패율</div></div>
+        </div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-step"><div class="sop-step-num">1</div><div class="sop-step-txt"><strong>전체 건수 최다 품목</strong> (바지 2,079건): 앞면 허벅지·무릎, 뒷면 臀부 위주 확인. 화이트계(크림/아이보리/흰색) 바지 별도 분류</div></div>
+        <div class="sop-step"><div class="sop-step-num">2</div><div class="sop-step-txt"><strong>색상에 따른 처리 분기</strong>: 화이트계 바지 스파팅 못지움율 높음(31.7% 얼룩율). 드라이 세탁 우선 적용. 블랙계는 스파팅 성공률 93%↑</div></div>
+        <div class="sop-step"><div class="sop-step-num">3</div><div class="sop-step-txt"><strong>바지 QC 부적합율 21%로 최고</strong>: 세탁 후 반드시 전체 재검. 웨트 세탁 후 줄·변형 확인 포함</div></div>
+        <div class="sop-step"><div class="sop-step-num">4</div><div class="sop-step-txt"><strong>스파팅 성공률 91.9%</strong>: 일반 얼룩은 스파팅으로 대부분 해결. 웨트 후 잔류 얼룩은 드라이 용제 추가 처리</div></div>
+        <div class="sop-warn">⚠ 데님(청바지) 별도: 색상 빠짐 위험 → 스파팅 전 소재 확인 후 수성 용제만 허용</div>
+      </div>
+    </div>
+
+    <!-- 니트/가디건 -->
+    <div class="sop-card sop-risk-mid">
+      <div class="sop-head">
+        <div class="sop-item-name">니트/스웨터 · 가디건</div>
+        <div class="sop-risk-badge">중위험 · 얼룩율 3~4% (저위험)</div>
+        <div class="sop-stats">
+          <div class="sop-stat"><div class="sop-stat-v">3~4%</div><div class="sop-stat-l">세탁전 얼룩율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">6~7%</div><div class="sop-stat-l">QC 부적합율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">10~11%</div><div class="sop-stat-l">스파팅 실패율</div></div>
+        </div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-step"><div class="sop-step-num">1</div><div class="sop-step-txt"><strong>얼룩 발생 자체는 낮음</strong>: 3~4%로 전 품목 최저권. 단, QC 부적합(6~7%)이 얼룩율보다 높음 — 얼룩 외 형태변형·필링이 부적합 원인</div></div>
+        <div class="sop-step"><div class="sop-step-num">2</div><div class="sop-step-txt"><strong>소재 확인 필수</strong>: 울 100% → 드라이 전용. 면/아크릴 혼방 → 웨트 가능 (단, 니트 형태 보존 위해 저온·약세탁)</div></div>
+        <div class="sop-step"><div class="sop-step-num">3</div><div class="sop-step-txt"><strong>스파팅 실패율 10~11%</strong>: 니트 조직 특성상 얼룩이 섬유 깊이 침투 시 제거 어려움. 발견 즉시 처리가 성공률 높임</div></div>
+        <div class="sop-step"><div class="sop-step-num">4</div><div class="sop-step-txt"><strong>화이트계 니트 스파팅 성공률 88.4%</strong>: 비교적 양호. 단 울 소재는 스파팅 용제 농도 저감 처리</div></div>
+        <div class="sop-warn">⚠ 울/캐시미어: 일반 스파팅 용제 사용 금지. 전용 중성 세제 + 저온 스팟 처리</div>
+      </div>
+    </div>
+
+    <!-- 코트/정장 -->
+    <div class="sop-card sop-risk-low">
+      <div class="sop-head">
+        <div class="sop-item-name">코트·트렌치코트 · 정장재킷</div>
+        <div class="sop-risk-badge">저위험 · 얼룩율 5~6% / 스파팅 성공 95~97%</div>
+        <div class="sop-stats">
+          <div class="sop-stat"><div class="sop-stat-v">5~6%</div><div class="sop-stat-l">세탁전 얼룩율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">6~11%</div><div class="sop-stat-l">QC 부적합율</div></div>
+          <div class="sop-stat"><div class="sop-stat-v">2~18%</div><div class="sop-stat-l">스파팅 실패율</div></div>
+        </div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-step"><div class="sop-step-num">1</div><div class="sop-step-txt"><strong>정장재킷: 스파팅 성공률 97.4%</strong> — 발견된 얼룩은 대부분 제거 가능. 소비자 불안 최소화 안내 가능</div></div>
+        <div class="sop-step"><div class="sop-step-num">2</div><div class="sop-step-txt"><strong>드라이 클리닝 전용</strong>: 대부분의 코트·정장 드라이 전용 소재. 웨트 처리 전 라벨 반드시 확인</div></div>
+        <div class="sop-step"><div class="sop-step-num">3</div><div class="sop-step-txt"><strong>코트 스파팅 실패율 17.6%로 상대적으로 높음</strong>: 긴 착용 기간으로 오래된 오염 다수. 접수 시 착용 기간·오염 시점 확인</div></div>
+        <div class="sop-step"><div class="sop-step-num">4</div><div class="sop-step-txt"><strong>코트 QC 부적합 11.2%</strong>: 형태 변형·광택 변화도 부적합 원인. 세탁 후 형태 복원 프레스 과정 확인</div></div>
+        <div class="sop-warn">⚠ 트렌치코트 벨트·내부 안감: 소재 다름 → 벨트 분리 후 별도 처리 권장</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 색상별 추가 SOP -->
+  <div class="card" style="margin-top:20px;">
+    <div class="card-title">색상 계열별 추가 처리 기준</div>
+    <div class="card-sub">품목 SOP에 색상 조건을 추가 적용하는 보조 지침</div>
+    <table class="dt">
+      <thead>
+        <tr><th>색상 계열</th><th>밝기</th><th>세탁전 얼룩율</th><th>스파팅 성공률</th><th>추가 처리 기준</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>화이트계</strong> ⬜</td><td>8~10</td>
+          <td style="color:#c0392b;font-weight:700">13.3%</td>
+          <td style="color:#c0392b;font-weight:700">81.4%</td>
+          <td><span class="tag t-r">최우선검수</span> 접수 시 전체 표면 라이트 검사. 웨트 세탁 금지 원칙 (화이트계 웨트 스파팅 실패율 66.7%)</td>
+        </tr>
+        <tr>
+          <td><strong>라이트계</strong> 🟨</td><td>6~8</td>
+          <td style="color:#856404;font-weight:700">8.3%</td>
+          <td style="color:#856404;font-weight:700">78.7%</td>
+          <td><span class="tag t-o">검수필요</span> 주요 오염 부위 확인. 드라이 우선, 웨트 시 소재 확인 필수</td>
+        </tr>
+        <tr>
+          <td><strong>미드계</strong> 🟫</td><td>4~6</td>
+          <td style="color:#2980b9;font-weight:600">5.4%</td>
+          <td style="color:#c0392b;font-weight:700">75.0% ⚠</td>
+          <td><span class="tag t-o">주의</span> 스파팅 못지움율 25%로 의외로 높음. 드라이 후에도 잔류 시 2차 스팟팅 고려</td>
+        </tr>
+        <tr>
+          <td><strong>다크계</strong> 🟦</td><td>2~4</td>
+          <td style="color:#27ae60;font-weight:600">5.7%</td>
+          <td style="color:#27ae60;font-weight:700">92.2%</td>
+          <td><span class="tag t-g">표준처리</span> 높은 스파팅 성공률. 표준 검수 및 드라이 처리 적용</td>
+        </tr>
+        <tr>
+          <td><strong>블랙계</strong> ⬛</td><td>0~2</td>
+          <td style="color:#27ae60;font-weight:600">6.3%</td>
+          <td style="color:#27ae60;font-weight:700">93.1%</td>
+          <td><span class="tag t-g">표준처리</span> 얼룩 발생률도 낮고 제거도 잘 됨. 단, QC 부적합 13.96%는 비얼룩 품질 이슈(형태 등) 반영</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+</div>
+<div class="footer">세탁결벽주의 TF · 2026년 4월 14~16일 · 군포 팩토리 3공정 연계 분석 기반 SOP</div>
+
+<script>
+const C = {
+  red:'#e05c5c', orange:'#f0a500', blue:'#4a90d9', green:'#3cb07e',
+  navy:'#1a3455', purple:'#7b2fbe', gray:'#aab'
+};
+
+// 세탁방법 도넛
+new Chart(document.getElementById('methodChart').getContext('2d'),{
+  type:'doughnut',
+  data:{
+    labels:['드라이 (5,200)','웨트 (1,193)','NO_JUDGEMENT (100)'],
+    datasets:[{data:[5200,1193,100],backgroundColor:[C.blue,C.green,C.gray],borderWidth:2,borderColor:'white',hoverOffset:6}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:12},boxWidth:14}}}}
+});
+
+// 공정 흐름 바 차트
+new Chart(document.getElementById('flowChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['세탁전 얼룩Y','세탁 후 QC 통과\n(세탁 제거)','스파팅 진행','스파팅 성공','최종 제거 불가'],
+    datasets:[{
+      data:[505,299,145,112,32],
+      backgroundColor:[C.red,'#3cb07e',C.orange,'#27ae60','#c0392b'],
+      borderRadius:6
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y}건`}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f0f4f8'},ticks:{font:{size:10}}}}
+  }
+});
+
+// 품목별 얼룩율
+const stainItems = {
+  labels:['패딩','일반셔츠','후드티/맨투맨','롱패딩점퍼','원피스/점프수트','바지','블라우스','티셔츠','재킷','스커트','정장재킷','코트/트렌치코트','가디건','세탁가능부속품','캐주얼조끼','니트/스웨터'],
+  rates:[21.43,23.28,14.81,13.89,11.27,11.11,11.11,10.16,9.24,7.89,7.52,5.88,4.38,3.85,3.70,3.09]
+};
+new Chart(document.getElementById('stainItemChart').getContext('2d'),{
+  type:'bar',
+  data:{labels:stainItems.labels,datasets:[{label:'얼룩율(%)',data:stainItems.rates,backgroundColor:stainItems.rates.map(r=>r>=20?'#c0392b':r>=10?C.red:r>=5?C.orange:C.blue),borderRadius:5,barThickness:16}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f0f4f8'},ticks:{font:{size:10},callback:v=>v+'%'},max:28},y:{grid:{display:false},ticks:{font:{size:11}}}}}
+});
+
+// 세탁방법별 얼룩율
+new Chart(document.getElementById('stainCondChart').getContext('2d'),{
+  type:'bar',
+  data:{labels:['드라이 (6.48%)','웨트 (13.16%)','NO_JUDGEMENT (11.0%)'],datasets:[{data:[6.48,13.16,11.0],backgroundColor:[C.blue,C.red,C.gray],borderRadius:6,barThickness:36}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'%'},max:18}}}
+});
+
+// 밝기구간별 얼룩율
+new Chart(document.getElementById('stainBrightChart').getContext('2d'),{
+  type:'bar',
+  data:{labels:['블랙(0-2)','다크(2-4)','미드(4-6)','라이트(6-8)','화이트(8-10)'],datasets:[{data:[6.26,5.66,5.37,8.27,13.27],backgroundColor:['#2c2c2c','#6b7abd',C.blue,C.orange,'#e05c5c'],borderRadius:5,barThickness:28}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'%',font:{size:10}},max:16}}}
+});
+
+// QC 품목별 부적합율
+const qcItems = {
+  labels:['바지','정장재킷','원피스/점프수트','후드티/맨투맨','블라우스','캐주얼조끼','코트/트렌치코트','재킷','티셔츠','스커트','니트/스웨터','가디건','롱패딩점퍼','일반셔츠','패딩','머플러','머플러·스카프'],
+  rates:[21.02,20.69,13.85,12.88,11.76,11.54,11.17,10.82,8.33,7.07,6.69,6.56,6.45,6.25,5.36,3.23,2.06]
+};
+new Chart(document.getElementById('qcItemChart').getContext('2d'),{
+  type:'bar',
+  data:{labels:qcItems.labels,datasets:[{label:'QC 부적합율(%)',data:qcItems.rates,backgroundColor:qcItems.rates.map(r=>r>=15?'#c0392b':r>=10?C.red:r>=6?C.orange:C.blue),borderRadius:5,barThickness:16}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'%',font:{size:10}},max:25},y:{grid:{display:false},ticks:{font:{size:11}}}}}
+});
+
+// QC 세탁방법별
+new Chart(document.getElementById('qcMethodChart').getContext('2d'),{
+  type:'bar',
+  data:{labels:['드라이 (10.55%)','웨트 (19.28%)','NO_JUDGEMENT (0%)'],datasets:[{data:[10.55,19.28,0],backgroundColor:[C.blue,C.red,C.gray],borderRadius:6,barThickness:36}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'%'},max:24}}}
+});
+
+// QC 세탁전 얼룩
+new Chart(document.getElementById('qcStainChart').getContext('2d'),{
+  type:'bar',
+  data:{labels:['세탁전 얼룩 없음(N)','세탁전 얼룩 있음(Y)'],datasets:[{data:[11.02,27.07],backgroundColor:[C.blue,C.red],borderRadius:6,barThickness:36}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'%'},max:32}}}
+});
+
+// QC 밝기
+new Chart(document.getElementById('qcBrightChart').getContext('2d'),{
+  type:'line',
+  data:{labels:['블랙(0-2)','다크(2-4)','미드(4-6)','라이트(6-8)','화이트(8-10)'],datasets:[{label:'QC 부적합율(%)',data:[13.96,10.25,8.09,10.73,14.27],borderColor:C.red,backgroundColor:'rgba(224,92,92,0.1)',borderWidth:2.5,pointRadius:5,pointBackgroundColor:C.red,fill:true,tension:0.3}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'%'},min:0,max:18}}}
+});
+
+// QC 작업자별
+new Chart(document.getElementById('qcWorkerChart').getContext('2d'),{
+  type:'bar',
+  data:{labels:['임휘랑','정보름','정성지','김예슬','주소희_군포','최민하','안정희','이보영','레사','박지선','이우섭','박진우','이지윤','허현'],
+    datasets:[{label:'부적합율(%)',data:[54.4,21.6,20.1,19.1,18.2,17.5,14.2,13.6,8.6,8.5,6.3,5.0,4.0,0.0],backgroundColor:function(ctx){const v=ctx.raw;return v>=40?'#c0392b':v>=15?C.red:v>=8?C.orange:C.green;},borderRadius:4,barThickness:18}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'%',font:{size:10}},max:60},y:{grid:{display:false},ticks:{font:{size:11}}}}}
+});
+
+// 스파팅 품목별
+const spotItems = {
+  labels:['머플러·스카프','원피스/점프수트','후드티/맨투맨','코트/트렌치코트','패딩','티셔츠','스커트','일반셔츠','캐주얼조끼','블라우스','니트/스웨터','가디건','재킷','와이셔츠','바지','정장재킷','롱패딩점퍼'],
+  fail:[40.0,27.3,18.6,17.6,16.7,15.9,15.0,14.8,14.3,11.1,10.7,10.3,8.9,8.3,6.6,2.6,0.0],
+  succ:[60.0,72.7,81.4,82.4,80.0,84.1,80.0,81.5,85.7,88.9,88.4,89.7,91.1,91.7,91.9,97.4,100.0]
+};
+new Chart(document.getElementById('spotItemChart').getContext('2d'),{
+  type:'bar',
+  data:{labels:spotItems.labels,datasets:[
+    {label:'제거불가율',data:spotItems.fail,backgroundColor:spotItems.fail.map(r=>r>=25?'#c0392b':r>=15?C.red:r>=10?C.orange:C.blue),borderRadius:5,barThickness:16},
+  ]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'%',font:{size:10}},max:45},y:{grid:{display:false},ticks:{font:{size:11}}}}}
+});
+
+// 스파팅 밝기 성공/실패
+new Chart(document.getElementById('spotBrightChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['블랙(0-2)','다크(2-4)','미드(4-6)','라이트(6-8)','화이트(8-10)','미측정'],
+    datasets:[
+      {label:'제거됨(%)',data:[93.1,92.2,75.0,78.7,81.4,93.0],backgroundColor:C.green+'aa',borderRadius:4,stack:'a',barThickness:28},
+      {label:'못지움(%)',data:[5.9,7.8,25.0,17.3,17.5,7.0],backgroundColor:C.red+'aa',borderRadius:4,stack:'a',barThickness:28}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'%'},max:110}}}
+});
+
+// 스파팅 히트맵
+const spotHmData = [
+  ['블랙계(0-2)','드라이',6.0,268],['블랙계(0-2)','웨트',5.3,38],
+  ['다크계(2-4)','드라이',8.0,75],['다크계(2-4)','웨트',6.7,15],
+  ['미드계(4-6)','드라이',24.2,33],['미드계(4-6)','웨트',28.6,7],
+  ['라이트계(6-8)','드라이',17.4,69],['라이트계(6-8)','웨트',16.7,6],
+  ['화이트계(8-10)','드라이',15.9,170],['화이트계(8-10)','웨트',66.7,6],
+  ['미측정','드라이',7.5,93]
+];
+function hmClr(v){if(v===null)return '#f5f7fa';if(v>=50)return '#8b0000';if(v>=25)return '#c0392b';if(v>=15)return '#e87070';if(v>=8)return '#fce8d2';return '#d1f0e0';}
+function hmTxt(v){return v>=25?'white':'#333';}
+const hm = document.getElementById('spotHm');
+hm.innerHTML='<tr><th style="text-align:left">밝기구간</th><th>드라이 못지움율</th><th>드라이 표본</th><th>웨트 못지움율</th><th>웨트 표본</th></tr>';
+const spotByBright = {};
+spotHmData.forEach(([bg,m,r,n])=>{if(!spotByBright[bg])spotByBright[bg]={};spotByBright[bg][m]={r,n};});
+['블랙계(0-2)','다크계(2-4)','미드계(4-6)','라이트계(6-8)','화이트계(8-10)','미측정'].forEach(bg=>{
+  if(!spotByBright[bg])return;
+  const d=spotByBright[bg]['드라이']||{r:null,n:'-'};
+  const w=spotByBright[bg]['웨트']||{r:null,n:'-'};
+  hm.innerHTML+=`<tr>
+    <td style="text-align:left;font-weight:700;background:#f5f7fa">${bg}</td>
+    <td style="background:${hmClr(d.r)};color:${hmTxt(d.r)}">${d.r!==null?d.r+'%':'-'}</td>
+    <td style="color:#8898aa">${d.n}건</td>
+    <td style="background:${hmClr(w.r)};color:${hmTxt(w.r)}">${w.r!==null?w.r+'%':'-'}</td>
+    <td style="color:#8898aa">${w.n}건</td>
+  </tr>`;
+});
+
+// 제거 용이 차트
+new Chart(document.getElementById('easyChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['롱패딩점퍼','정장재킷','와이셔츠','바지','재킷','가디건','니트/스웨터','블라우스','패딩','일반셔츠','스커트','티셔츠','후드티/맨투맨','코트/트렌치코트','원피스/점프수트','머플러·스카프'],
+    datasets:[{label:'스파팅 성공률(%)',data:[100.0,97.4,91.7,91.9,91.1,89.7,88.4,88.9,80.0,81.5,80.0,84.1,81.4,82.4,72.7,60.0],
+      backgroundColor:function(ctx){const v=ctx.raw;return v>=90?C.green:v>=80?C.blue:v>=70?C.orange:C.red;},borderRadius:5,barThickness:16}]
+  },
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f0f4f8'},ticks:{callback:v=>v+'%',font:{size:10}},min:50,max:105},y:{grid:{display:false},ticks:{font:{size:11}}}}}
+});
+
+// 난이도 종합 히트맵
+const hardHm = document.getElementById('hardHm');
+const hardData = [
+  {item:'패딩',stain:21.43,qc:5.36,spot:16.7,note:'화이트계+드라이 조합 최우선'},
+  {item:'일반셔츠',stain:23.28,qc:6.25,spot:14.8,note:'음식 오염 다발, 드라이 처리'},
+  {item:'후드티/맨투맨',stain:14.81,qc:12.88,spot:18.6,note:'스파팅 실패율 높음'},
+  {item:'티셔츠',stain:10.16,qc:8.33,spot:15.9,note:'화이트계 31%+'},
+  {item:'원피스/점프수트',stain:11.27,qc:13.85,spot:27.3,note:'복합소재 스파팅 어려움'},
+  {item:'코트/트렌치코트',stain:5.88,qc:11.17,spot:17.6,note:'오래된 오염 多'},
+  {item:'바지',stain:11.11,qc:21.02,spot:6.6,note:'QC 부적합율 최고, 스파팅은 양호'},
+  {item:'머플러·스카프',stain:0,qc:2.06,spot:40.0,note:'소재 특성상 처리 제한'},
+  {item:'니트/스웨터',stain:3.09,qc:6.69,spot:10.7,note:'울 소재 용제 제한'},
+  {item:'가디건',stain:4.38,qc:6.56,spot:10.3,note:'표준처리 가능'},
+  {item:'재킷',stain:9.24,qc:10.82,spot:8.9,note:'드라이 처리 양호'},
+  {item:'롱패딩점퍼',stain:13.89,qc:6.45,spot:0,note:'스파팅 100% 성공'},
+];
+function rateClr(v,thrs){const [l1,l2,l3]=thrs;if(v>=l3)return '#fde8e8';if(v>=l2)return '#fff3cd';if(v>=l1)return '#d1f0e0';return '#f0f4f8';}
+function rateClrTxt(v,thrs){const [l1,l2,l3]=thrs;if(v>=l3)return '#c0392b';if(v>=l2)return '#856404';if(v>=l1)return '#155724';return '#8898aa';}
+hardHm.innerHTML=`<tr>
+  <th style="text-align:left">품목명</th>
+  <th>세탁전 얼룩율</th>
+  <th>QC 부적합율</th>
+  <th>스파팅 실패율</th>
+  <th>처리 포인트</th>
+</tr>`;
+hardData.forEach(d=>{
+  hardHm.innerHTML+=`<tr>
+    <td style="font-weight:700;text-align:left">${d.item}</td>
+    <td style="background:${rateClr(d.stain,[5,10,18])};color:${rateClrTxt(d.stain,[5,10,18])};font-weight:700">${d.stain}%</td>
+    <td style="background:${rateClr(d.qc,[5,10,18])};color:${rateClrTxt(d.qc,[5,10,18])};font-weight:700">${d.qc}%</td>
+    <td style="background:${rateClr(d.spot,[5,15,25])};color:${rateClrTxt(d.spot,[5,15,25])};font-weight:700">${d.spot}%</td>
+    <td style="font-size:12px;color:#5a6a7a">${d.note}</td>
+  </tr>`;
+});
+
+// nav scroll
+const anchors=document.querySelectorAll('.sec-anchor');
+const navLinks=document.querySelectorAll('.nav li a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  anchors.forEach(a=>{if(window.scrollY>=a.offsetTop-100)cur=a.id;});
+  navLinks.forEach(a=>{a.classList.remove('active');if(a.getAttribute('href')==='#'+cur)a.classList.add('active');});
+});
+</script>
+</body>
+</html>
