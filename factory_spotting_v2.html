@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ko" class="theme-light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>팩토리·품목·컬러별 스파팅 결과 분석</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+  <script>if(typeof Chart!=='undefined') Chart.defaults.animation=false;</script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{interpolate-size:allow-keywords}
+    html.theme-dark{--bg:#0A0A0A;--surface:#141414;--surface-hover:#1e1e1e;--border:rgba(255,255,255,0.06);--text:#EDEDED;--text-secondary:#888;--accent:#3b82f6;--accent-secondary:#8b5cf6;--positive:#10b981;--negative:#f43f5e;--warning:#f59e0b;--ss:#3b82f6;--gp:#10b981}
+    html.theme-light{--bg:#F4F5F9;--surface:#fff;--surface-hover:#f0f1f6;--border:rgba(0,0,0,0.07);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706;--ss:#2563eb;--gp:#059669}
+    body{font-family:'Noto Sans KR','Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s;scrollbar-gutter:stable}
+    h1{font-size:2.5rem;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+    h2{font-size:2rem;font-weight:600;letter-spacing:-.03em;line-height:1.1}
+    h3{font-size:1.5rem;font-weight:600;letter-spacing:-.03em}
+    h1,h2,h3,h4{color:var(--text)}
+
+    /* === MENU === */
+    .viz-menu{position:fixed;top:16px;right:16px;z-index:9999}
+    .viz-menu-toggle{width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+    .viz-menu-toggle:hover{background:var(--surface-hover)}
+    .viz-menu-dropdown{position:absolute;top:52px;right:0;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .2s;backdrop-filter:blur(16px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+    .viz-menu-dropdown.open{opacity:1;visibility:visible;transform:translateY(0)}
+    .viz-menu-dropdown button{width:100%;padding:10px 14px;border:none;border-radius:8px;background:transparent;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;transition:background .15s}
+    .viz-menu-dropdown button:hover{background:var(--surface-hover)}
+
+    /* === ANIMATIONS === */
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .animate{animation:fadeInUp .55s ease-out both}
+    .animate.d1{animation-delay:.07s}.animate.d2{animation-delay:.14s}.animate.d3{animation-delay:.21s}.animate.d4{animation-delay:.28s}.animate.d5{animation-delay:.35s}.animate.d6{animation-delay:.42s}
+    .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+    .reveal.visible{opacity:1;transform:none}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+    /* === LAYOUT === */
+    .container{max-width:1320px;margin:0 auto;padding:0 32px}
+
+    /* === HEADER === */
+    .page-header{padding:52px 0 36px;border-bottom:1px solid var(--border);margin-bottom:48px}
+    .badge-row{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:11.5px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary)}
+    .badge .dot{width:6px;height:6px;border-radius:50%;background:var(--positive)}
+    .page-header p{color:var(--text-secondary);font-size:1rem;margin-top:8px}
+    .meta-row{display:flex;gap:24px;margin-top:18px;flex-wrap:wrap}
+    .meta-item{font-size:13px;color:var(--text-secondary)}
+    .meta-item strong{color:var(--text);font-weight:600}
+
+    /* === CARDS === */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;transition:box-shadow .2s}
+    .card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08)}
+
+    /* === KPI === */
+    .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:48px}
+    .kpi-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);margin-bottom:8px}
+    .kpi-val{font-size:2rem;font-weight:700;letter-spacing:-.04em;line-height:1;margin-bottom:6px;color:var(--text)}
+    .kpi-sub{font-size:12px;color:var(--text-secondary)}
+    .pill{display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:600}
+    .pill-ok{background:rgba(5,150,105,.12);color:var(--positive)}
+    .pill-ng{background:rgba(225,29,72,.12);color:var(--negative)}
+    .pill-warn{background:rgba(217,119,6,.12);color:var(--warning)}
+
+    /* === SECTION === */
+    section{margin-bottom:52px}
+    .sec-hdr{margin-bottom:20px}
+    .sec-hdr h2{font-size:1.35rem;margin-bottom:3px}
+    .sec-hdr p{font-size:13px;color:var(--text-secondary)}
+    .divider{height:1px;background:var(--border);margin:48px 0}
+
+    /* === GRID LAYOUTS === */
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+    .col-stack{display:flex;flex-direction:column;gap:20px}
+
+    /* === FACTORY OVERVIEW CARDS === */
+    .fac-card{border-radius:12px;padding:26px;border:1px solid}
+    .fac-card.ss{background:linear-gradient(135deg,rgba(37,99,235,.07),rgba(37,99,235,.02));border-color:rgba(37,99,235,.15)}
+    .fac-card.gp{background:linear-gradient(135deg,rgba(5,150,105,.07),rgba(5,150,105,.02));border-color:rgba(5,150,105,.15)}
+    .fac-name{font-size:1.4rem;font-weight:700;margin-bottom:14px}
+    .fac-name.ss{color:var(--ss)}.fac-name.gp{color:var(--gp)}
+    .fac-stats{display:flex;gap:18px;flex-wrap:wrap}
+    .fac-stat-v{font-size:1.5rem;font-weight:700;letter-spacing:-.04em}
+    .fac-stat-v.ok{color:var(--positive)}.fac-stat-v.ng{color:var(--negative)}.fac-stat-v.rw{color:var(--warning)}
+    .fac-stat-l{font-size:10.5px;color:var(--text-secondary);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+    /* === CHART CONTAINERS === */
+    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:26px}
+    .chart-ttl{font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:3px}
+    .chart-sub{font-size:12px;color:var(--text-secondary);margin-bottom:18px}
+    .cbox{position:relative}
+
+    /* === TAB FILTER === */
+    .tab-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+    .tab-btn{padding:5px 13px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);font-size:12.5px;font-family:inherit;cursor:pointer;font-weight:500;transition:all .15s}
+    .tab-btn:hover{background:var(--surface-hover);color:var(--text)}
+    .tab-btn.active{background:var(--accent);color:#fff;border-color:transparent}
+
+    /* === ITEM TABLE === */
+    .tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);background:var(--surface)}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{background:var(--surface-hover);padding:11px 14px;text-align:left;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);white-space:nowrap;cursor:pointer}
+    thead th:hover{color:var(--text)}
+    thead th:not(:first-child){text-align:right}
+    tbody tr{border-top:1px solid var(--border)}
+    tbody tr:hover{background:var(--surface-hover)}
+    tbody td{padding:11px 14px;white-space:nowrap}
+    tbody td:not(:first-child){text-align:right}
+    .td-name{font-weight:500}
+    .bar-wrap{display:flex;align-items:center;gap:7px;justify-content:flex-end}
+    .bar-bg{height:5px;border-radius:3px;background:var(--border);width:54px;overflow:hidden;flex-shrink:0}
+    .bar-fill{height:100%;border-radius:3px}
+    .bar-ok{background:var(--positive)}.bar-ng{background:var(--negative)}
+    .rnum{font-weight:600;min-width:40px;font-size:12.5px}
+    .gap-pill{display:inline-flex;padding:2px 6px;border-radius:4px;font-size:10.5px;font-weight:600}
+    .gap-lg{background:rgba(225,29,72,.1);color:var(--negative)}
+    .gap-md{background:rgba(217,119,6,.1);color:var(--warning)}
+    .gap-sm{background:rgba(5,150,105,.1);color:var(--positive)}
+
+    /* === COLOR SWATCHES === */
+    .swatch-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .swatch-card{border-radius:10px;border:1px solid var(--border);overflow:hidden;background:var(--surface);transition:box-shadow .2s}
+    .swatch-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+    .swatch-color{height:52px;width:100%;border-bottom:1px solid var(--border)}
+    .swatch-body{padding:10px 12px}
+    .swatch-hex{font-size:11px;font-weight:600;color:var(--text-secondary);font-family:'Inter',monospace;margin-bottom:4px}
+    .swatch-rate{font-size:1.1rem;font-weight:700;letter-spacing:-.02em}
+    .swatch-cnt{font-size:10.5px;color:var(--text-secondary);margin-top:2px}
+    .swatch-bar{height:4px;border-radius:2px;margin-top:6px;background:var(--border)}
+    .swatch-bar-fill{height:100%;border-radius:2px;background:var(--positive)}
+
+    /* === HEATMAP === */
+    .heatmap-wrap{overflow-x:auto}
+    .heatmap{border-collapse:collapse;width:100%;font-size:12px}
+    .heatmap th{padding:9px 12px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary);white-space:nowrap;border-bottom:1px solid var(--border)}
+    .heatmap th:first-child{text-align:left}
+    .heatmap td{padding:8px 10px;text-align:center;border:1px solid var(--border);font-weight:600;font-size:12px;border-radius:0;min-width:80px}
+    .heatmap td:first-child{text-align:left;font-weight:500;color:var(--text);white-space:nowrap;border-left:none;background:var(--surface)}
+    .hm-cell{border-radius:4px;padding:4px 6px;display:inline-block;min-width:56px}
+    .sub-val{font-size:10px;font-weight:400;opacity:.7}
+
+    /* === INSIGHT GRID === */
+    .insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .ins-card{border-radius:12px;padding:18px;border:1px solid var(--border);background:var(--surface);transition:box-shadow .2s}
+    .ins-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+    .ins-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+    .ins-icon.blue{background:rgba(37,99,235,.1)}.ins-icon.green{background:rgba(5,150,105,.1)}.ins-icon.orange{background:rgba(217,119,6,.1)}.ins-icon.red{background:rgba(225,29,72,.1)}.ins-icon.purple{background:rgba(124,58,237,.1)}
+    .ins-ttl{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
+    .ins-txt{font-size:12px;color:var(--text-secondary);line-height:1.55}
+    .ins-txt strong{color:var(--text);font-weight:600}
+
+    /* === PRINT === */
+    @media print{body{background:#fff!important;color:#000!important}.viz-menu{display:none!important}.card,.chart-card,.fac-card{break-inside:avoid;border:1px solid #ddd;box-shadow:none}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+    @page{margin:.75in}
+
+    /* === RESPONSIVE === */
+    @media(max-width:1024px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.swatch-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}.insight-grid{grid-template-columns:1fr 1fr}.swatch-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){h1{font-size:1.8rem}.container{padding:0 16px}.kpi-grid{grid-template-columns:1fr 1fr}.insight-grid{grid-template-columns:1fr}}
+    @media(max-width:375px){body{overflow-x:hidden}}
+  </style>
+</head>
+<body>
+<a href="#main-content" style="position:absolute;left:-9999px" onfocus="this.style.cssText='position:fixed;left:16px;top:16px;z-index:10000;padding:8px 16px;background:var(--accent);color:#fff;border-radius:4px'">콘텐츠로 이동</a>
+
+<div class="viz-menu">
+  <button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="메뉴">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg>
+  </button>
+  <div class="viz-menu-dropdown" id="vizMenuDropdown">
+    <button onclick="cycleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">라이트</span></button>
+    <button onclick="downloadImage()"><span>📥</span><span>PNG 다운로드</span></button>
+    <button onclick="window.print()"><span>🖨️</span><span>인쇄 / PDF</span></button>
+  </div>
+</div>
+
+<main id="main-content">
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="page-header animate">
+    <div class="badge-row">
+      <div class="badge"><span class="dot"></span>세탁결벽주의 TF · 수정본 v2</div>
+      <div class="badge">팩토리 × 품목 × 컬러 3축 분석</div>
+    </div>
+    <h1>팩토리별 스파팅 결과 비교분석</h1>
+    <p>성수 vs 군포 — 품목별 · 컬러(밝기)별 얼룩제거 성공률 종합 대시보드</p>
+    <div class="meta-row">
+      <div class="meta-item">총 데이터 <strong>7,740건</strong></div>
+      <div class="meta-item">성수 <strong>3,939건</strong></div>
+      <div class="meta-item">군포 <strong>3,801건</strong></div>
+      <div class="meta-item">분석 품목 <strong>15개</strong></div>
+      <div class="meta-item">기준일 <strong>2026.05.08</strong></div>
+    </div>
+  </header>
+
+  <!-- KPI -->
+  <section aria-label="핵심 KPI">
+    <div class="kpi-grid">
+      <div class="card animate d1">
+        <div class="kpi-label">전체 건수</div>
+        <div class="kpi-val" data-count="7740">0</div>
+        <div class="kpi-sub">수정본 기준</div>
+      </div>
+      <div class="card animate d2">
+        <div class="kpi-label">성수 성공률</div>
+        <div class="kpi-val" style="color:var(--ss)">76.6%</div>
+        <div class="kpi-sub">실패 <span class="pill pill-ng">23.1%</span></div>
+      </div>
+      <div class="card animate d3">
+        <div class="kpi-label">군포 성공률</div>
+        <div class="kpi-val" style="color:var(--gp)">88.6%</div>
+        <div class="kpi-sub">실패 <span class="pill pill-warn">9.7%</span></div>
+      </div>
+      <div class="card animate d4">
+        <div class="kpi-label">팩토리 격차</div>
+        <div class="kpi-val" style="color:var(--negative)">12.0%p</div>
+        <div class="kpi-sub">군포 우위 — 전 품목 동일</div>
+      </div>
+      <div class="card animate d5">
+        <div class="kpi-label">컬러 영향</div>
+        <div class="kpi-val" style="font-size:1.4rem">최대 28%p</div>
+        <div class="kpi-sub">진한색 90% ↔ 밝은색 62% (성수)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FACTORY OVERVIEW -->
+  <section aria-label="팩토리 개요" data-reveal>
+    <div class="sec-hdr"><h2>팩토리 전체 현황</h2><p>성수 vs 군포 결과 요약 및 전체 분포</p></div>
+    <div class="g2" style="margin-bottom:20px">
+      <div class="fac-card ss">
+        <div class="fac-name ss">성수 팩토리</div>
+        <div class="fac-stats">
+          <div><div class="fac-stat-v">3,939</div><div class="fac-stat-l">총 건수</div></div>
+          <div><div class="fac-stat-v ok">76.6%</div><div class="fac-stat-l">성공률</div></div>
+          <div><div class="fac-stat-v ng">23.1%</div><div class="fac-stat-l">실패율</div></div>
+          <div><div class="fac-stat-v rw">0.3%</div><div class="fac-stat-l">재세탁</div></div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text-secondary)">
+          밝은 색상에서 <strong style="color:var(--negative)">성공률 62%대로 급락</strong> — 컬러 민감도 높음
+        </div>
+      </div>
+      <div class="fac-card gp">
+        <div class="fac-name gp">군포 팩토리</div>
+        <div class="fac-stats">
+          <div><div class="fac-stat-v">3,801</div><div class="fac-stat-l">총 건수</div></div>
+          <div><div class="fac-stat-v ok">88.6%</div><div class="fac-stat-l">성공률</div></div>
+          <div><div class="fac-stat-v ng">9.7%</div><div class="fac-stat-l">실패율</div></div>
+          <div><div class="fac-stat-v rw">1.7%</div><div class="fac-stat-l">재세탁</div></div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text-secondary)">
+          밝은 색상에서도 <strong style="color:var(--positive)">최저 81%+ 유지</strong> — 전반적 안정적
+        </div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="chart-card">
+        <div class="chart-ttl">팩토리별 결과 분포</div>
+        <div class="chart-sub">전체 건수 기준 성공·실패·재세탁 비율 (%)</div>
+        <div class="cbox" style="height:300px" role="img" aria-label="팩토리별 결과 분포 누적 막대 차트">
+          <canvas id="overviewChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-ttl">컬러 밝기구간별 성공률 비교</div>
+        <div class="chart-sub">어두울수록 성공률 높음 — 성수는 밝은 색에서 급락</div>
+        <div class="cbox" style="height:300px" role="img" aria-label="컬러 밝기구간별 성수 군포 성공률 꺾은선 차트">
+          <canvas id="colorLineChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ITEM COMPARISON -->
+  <section aria-label="품목별 비교" data-reveal>
+    <div class="sec-hdr"><h2>품목별 스파팅 성공률 비교</h2><p>헤더 클릭 정렬 · 필터로 원하는 품목만 확인</p></div>
+    <div class="tab-row" role="group">
+      <button class="tab-btn active" onclick="setFilter('all',this)">전체</button>
+      <button class="tab-btn" onclick="setFilter('gap_high',this)">격차 큰 품목 (15%p↑)</button>
+      <button class="tab-btn" onclick="setFilter('ss_top',this)">성수 85%↑</button>
+      <button class="tab-btn" onclick="setFilter('both_low',this)">양쪽 모두 낮음</button>
+      <button class="tab-btn" onclick="setFilter('ss_low',this)">성수 70%↓</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">품목명 ↕</th>
+            <th onclick="sortTable(1)">성수 건수</th>
+            <th>성수 성공률</th>
+            <th>성수 실패율</th>
+            <th onclick="sortTable(4)">군포 건수</th>
+            <th>군포 성공률</th>
+            <th>군포 실패율</th>
+            <th onclick="sortTable(7)">격차(군포-성수) ↕</th>
+          </tr>
+        </thead>
+        <tbody id="itemTbody"></tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:20px">
+      <div class="chart-card">
+        <div class="chart-ttl">품목별 성공률 비교 — 성수(파랑) vs 군포(초록)</div>
+        <div class="chart-sub">낮을수록 집중 개선 필요 · 목표: 90%+</div>
+        <div class="cbox" style="height:400px" role="img" aria-label="품목별 성공률 성수 군포 비교 수평 막대 차트">
+          <canvas id="itemChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- COLOR ANALYSIS -->
+  <section aria-label="컬러별 분석" data-reveal>
+    <div class="sec-hdr"><h2>컬러별 스파팅 성공률</h2><p>실제 색상 스와치 + 성공률 — 진한 색상일수록 얼룩제거 성공률 높음</p></div>
+    <div class="swatch-grid" id="swatchGrid"></div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- HEATMAP: ITEM x COLOR -->
+  <section aria-label="품목 x 컬러 히트맵" data-reveal>
+    <div class="sec-hdr"><h2>품목 × 컬러 밝기 성공률 히트맵</h2><p>빨간색=낮음 / 초록색=높음 · 빈칸=데이터 부족</p></div>
+    <div style="margin-bottom:12px;display:flex;gap:6px;align-items:center">
+      <span style="font-size:12px;color:var(--text-secondary)">범례:</span>
+      <span style="font-size:11px;padding:2px 7px;border-radius:4px;background:#dcfce7;color:#166534;font-weight:600">90%+</span>
+      <span style="font-size:11px;padding:2px 7px;border-radius:4px;background:#fef9c3;color:#854d0e;font-weight:600">75~90%</span>
+      <span style="font-size:11px;padding:2px 7px;border-radius:4px;background:#fee2e2;color:#991b1b;font-weight:600">75%↓</span>
+    </div>
+    <div class="heatmap-wrap">
+      <table class="heatmap" id="heatmapTable"></table>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- FACTORY x COLOR CHART -->
+  <section aria-label="팩토리 x 컬러 상세" data-reveal>
+    <div class="sec-hdr"><h2>팩토리 × 컬러 밝기 성공률 상세</h2><p>성수는 밝은 색(중간~화이트)에서 집중적으로 실패율 증가</p></div>
+    <div class="g2">
+      <div class="chart-card">
+        <div class="chart-ttl">성수 팩토리 — 밝기구간별 결과</div>
+        <div class="chart-sub">건수 기준 성공/실패/재세탁 분포</div>
+        <div class="cbox" style="height:300px" role="img" aria-label="성수 팩토리 밝기구간별 결과 누적 막대 차트">
+          <canvas id="ssColorChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-ttl">군포 팩토리 — 밝기구간별 결과</div>
+        <div class="chart-sub">건수 기준 성공/실패/재세탁 분포</div>
+        <div class="cbox" style="height:300px" role="img" aria-label="군포 팩토리 밝기구간별 결과 누적 막대 차트">
+          <canvas id="gpColorChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- INSIGHTS -->
+  <section aria-label="핵심 인사이트" data-reveal>
+    <div class="sec-hdr"><h2>핵심 인사이트</h2><p>3축 분석(팩토리·품목·컬러)에서 도출한 주요 발견사항</p></div>
+    <div class="insight-grid">
+      <div class="ins-card">
+        <div class="ins-icon blue"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+        <div class="ins-ttl">군포 전 품목 우위</div>
+        <div class="ins-txt">전체 <strong>12.0%p 격차</strong>(88.6% vs 76.6%). 분석한 15개 품목 모두에서 군포가 성수를 앞서며, 최소 격차 품목은 후드티·맨투맨(4.2%p).</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-icon red"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div class="ins-ttl">성수 재킷·일반셔츠 최대 격차</div>
+        <div class="ins-txt">재킷 <strong>21.5%p</strong>(66.2% vs 87.7%), 일반셔츠 <strong>21.8%p</strong>(68.5% vs 90.3%) 격차. 특히 중간~밝은 색상에서 성수가 <strong>50%대</strong>까지 붕괴.</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-icon orange"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="ins-ttl">패딩 × 중간색 최악 조합</div>
+        <div class="ins-txt">컬러 밝기 중간(3~6) 패딩의 성공률은 <strong>전체 최저 33.3%</strong>. 성수의 중간색 패딩은 0건도 아니며, 실제 데이터 기반 최저치로 즉각 대응 필요.</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-icon purple"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+        <div class="ins-ttl">컬러가 성공률을 최대 28%p 좌우</div>
+        <div class="ins-txt">성수 기준 진한색(1~3) <strong>90.4%</strong> vs 밝은색(6~8) <strong>62.4%</strong> → <strong>28%p 차이</strong>. 컬러 자체가 팩토리 격차만큼 성과를 결정짓는 변수.</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-icon green"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+        <div class="ins-ttl">정장재킷 벤치마킹 포인트</div>
+        <div class="ins-txt">군포 <strong>97.0%</strong>, 성수 <strong>91.1%</strong>로 양 팩토리 모두 최고 성과. 특히 진한색에서 97%+ 달성. 정장재킷 작업 방식의 타 품목 적용 검토 권장.</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-icon blue"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 000 11.4M17.7 6.3a8 8 0 010 11.4M3 12h2M19 12h2M12 3v2M12 19v2"/></svg></div>
+        <div class="ins-ttl">군포는 컬러 밝기 영향 적음</div>
+        <div class="ins-txt">군포는 진한색 <strong>94.5%</strong> → 화이트 <strong>81.8%</strong>로 <strong>12.7%p</strong> 차이인 반면, 성수는 같은 구간에서 <strong>21.9%p</strong> 하락. 밝은 색 대응 역량 차이가 핵심.</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+var ITEMS = [
+  {name:'가디건',      ss:81.2, gp:90.8, ss_n:186, gp_n:173},
+  {name:'니트, 스웨터', ss:83.1, gp:89.0, ss_n:385, gp_n:419},
+  {name:'롱패딩점퍼',  ss:59.1, gp:74.4, ss_n:22,  gp_n:39},
+  {name:'바지',        ss:80.9, gp:91.4, ss_n:921, gp_n:1485},
+  {name:'블라우스',    ss:79.8, gp:91.6, ss_n:163, gp_n:107},
+  {name:'스커트',      ss:77.5, gp:88.1, ss_n:129, gp_n:84},
+  {name:'와이셔츠',    ss:69.5, gp:79.7, ss_n:167, gp_n:64},
+  {name:'원피스,점프수트',ss:75.7,gp:86.2,ss_n:140,gp_n:94},
+  {name:'일반셔츠',    ss:68.5, gp:90.3, ss_n:397, gp_n:175},
+  {name:'재킷',        ss:66.2, gp:87.7, ss_n:328, gp_n:268},
+  {name:'정장재킷',    ss:91.1, gp:97.0, ss_n:270, gp_n:167},
+  {name:'코트,트렌치', ss:72.0, gp:88.1, ss_n:168, gp_n:135},
+  {name:'티셔츠',      ss:72.8, gp:82.1, ss_n:294, gp_n:234},
+  {name:'패딩',        ss:57.4, gp:74.6, ss_n:54,  gp_n:118},
+  {name:'후드티,맨투맨',ss:78.0,gp:82.2, ss_n:209, gp_n:157},
+];
+
+var BRIGHTNESS = ['다크(0~1)','진한(1~3)','중간(3~6)','밝은(6~8)','화이트(8~10)'];
+var BRIGHTNESS_SHORT = ['다크','진한','중간','밝은','화이트'];
+var BRIGHT_SS = [89.8, 90.4, 64.3, 62.4, 68.5];
+var BRIGHT_GP = [95.5, 94.5, 84.6, 81.1, 81.8];
+var BRIGHT_SS_N = [59, 1431, 364, 436, 1195];
+var BRIGHT_GP_N = [179, 1542, 331, 402, 914];
+
+// ss: ok/fail/rw per brightness
+var SS_OK  = [53,  1293, 234, 272, 818];
+var SS_NG  = [6,   135,  129, 163, 370];
+var SS_RW  = [0,   3,    1,   1,   7];
+var GP_OK  = [171, 1457, 280, 326, 748];
+var GP_NG  = [6,   76,   37,  61,  149];
+var GP_RW  = [2,   9,    14,  15,  17];
+
+var SWATCHES = [
+  {hex:'#1A1A1A', ok:94.5, n:795},
+  {hex:'#262626', ok:95.0, n:298},
+  {hex:'#000000', ok:94.2, n:190},
+  {hex:'#2C2C2C', ok:89.5, n:153},
+  {hex:'#333333', ok:87.9, n:141},
+  {hex:'#808080', ok:78.0, n:59},
+  {hex:'#A9A9A9', ok:62.9, n:62},
+  {hex:'#D3D3D3', ok:57.4, n:47},
+  {hex:'#D2B48C', ok:74.6, n:118},
+  {hex:'#F5F5DC', ok:73.7, n:448},
+  {hex:'#FFFDD0', ok:79.8, n:89},
+  {hex:'#FDF5E6', ok:78.2, n:55},
+  {hex:'#F5F5F5', ok:73.6, n:144},
+  {hex:'#F5F5F0', ok:81.2, n:64},
+  {hex:'#FFFFFF', ok:79.8, n:609},
+  {hex:'#191970', ok:95.3, n:43},
+];
+
+// heatmap: rows=items(14), cols=brightness(5)
+var HMAP_ITEMS = ['바지','니트, 스웨터','재킷','일반셔츠','티셔츠','정장재킷','가디건','코트, 트렌치코트','패딩','블라우스','스커트','와이셔츠','후드티, 맨투맨티','원피스, 점프수트'];
+var HMAP_DATA = [
+  [95,94,78,76,73], // 바지
+  [96,97,80,80,80], // 니트,스웨터
+  [86,90,65,66,63], // 재킷
+  [100,83,67,67,76], // 일반셔츠
+  [88,87,67,58,75], // 티셔츠
+  [100,97,96,75,69], // 정장재킷
+  [93,96,84,76,78], // 가디건
+  [100,97,74,59,67], // 코트,트렌치코트
+  [100,78,33,58,77], // 패딩
+  [100,94,62,73,83], // 블라우스
+  [100,92,58,80,69], // 스커트
+  [100,90,76,65,71], // 와이셔츠
+  [100,87,73,79,68], // 후드티,맨투맨티
+  [100,84,71,43,73], // 원피스,점프수트
+];
+var HMAP_CNT = [
+  [58,1428,226,250,324],
+  [28,245,75,109,270],
+  [28,194,57,65,127],
+  [2,82,54,69,310],
+  [8,150,33,36,259],
+  [5,211,24,20,16],
+  [29,106,44,49,110],
+  [24,92,31,61,55],
+  [3,27,15,19,60],
+  [6,32,13,26,161],
+  [7,80,12,30,65],
+  [1,21,17,17,161],
+  [3,143,60,43,63],
+  [19,96,14,14,63],
+];
+
+// ============================================================
+// MENU / THEME
+// ============================================================
+function toggleMenu(){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.toggle('open');}
+document.addEventListener('click',function(e){if(!e.target.closest('.viz-menu')){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.remove('open');}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.remove('open');}});
+
+var currentTheme=localStorage.getItem('viz-theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+function applyTheme(t){
+  document.documentElement.className='theme-'+t;
+  document.getElementById('themeIcon').textContent=t==='dark'?'🌙':'☀️';
+  document.getElementById('themeLabel').textContent=t==='dark'?'다크':'라이트';
+  localStorage.setItem('viz-theme',t);
+  currentTheme=t;
+  if(typeof onThemeChange==='function') onThemeChange();
+}
+function cycleTheme(){applyTheme(currentTheme==='dark'?'light':'dark');}
+applyTheme(currentTheme);
+
+// ============================================================
+// SCROLL REVEAL + COUNTER
+// ============================================================
+document.querySelectorAll('[data-reveal]').forEach(function(el){el.classList.add('reveal');});
+var ro=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');ro.unobserve(e.target);}});},{threshold:.08});
+document.querySelectorAll('.reveal').forEach(function(el){ro.observe(el);});
+
+function animateCounters(){
+  document.querySelectorAll('[data-count]').forEach(function(el){
+    if(el.dataset.counted)return;el.dataset.counted='1';
+    var t=parseFloat(el.dataset.count),suf=el.dataset.suffix||'',st=performance.now(),dur=1100;
+    (function tick(now){var p=Math.min((now-st)/dur,1),e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(t*e).toLocaleString()+suf;if(p<1)requestAnimationFrame(tick);})(st);
+  });
+}
+var cEl=document.querySelector('[data-count]');
+if(cEl){var cObs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){animateCounters();cObs.disconnect();}});},{threshold:.3});cObs.observe(cEl);}
+
+// ============================================================
+// CHARTS
+// ============================================================
+var chartsBuilt=false;
+var CI={};
+
+function getC(){
+  var dk=document.documentElement.classList.contains('theme-dark');
+  return {
+    text:dk?'#EDEDED':'#0f172a', sec:dk?'#888':'#64748b',
+    grid:dk?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.07)',
+    ss:dk?'rgba(59,130,246,.82)':'rgba(37,99,235,.82)',
+    gp:dk?'rgba(16,185,129,.82)':'rgba(5,150,105,.82)',
+    ok:dk?'rgba(16,185,129,.85)':'rgba(5,150,105,.85)',
+    ng:dk?'rgba(244,63,94,.85)':'rgba(225,29,72,.85)',
+    rw:dk?'rgba(245,158,11,.85)':'rgba(217,119,6,.85)',
+  };
+}
+
+function resetCanvas(id){
+  var old=document.getElementById(id);if(!old)return null;
+  var p=old.parentNode,c=document.createElement('canvas');c.id=id;p.replaceChild(c,old);return c;
+}
+
+function buildCharts(){
+  if(chartsBuilt||typeof Chart==='undefined')return;
+  Chart.defaults.animation=false;
+  var c=getC();
+
+  var basePlugin={
+    legend:{position:'top',labels:{color:c.text,font:{family:'Noto Sans KR',size:12},boxWidth:12,padding:14}},
+    tooltip:{enabled:true}
+  };
+
+  // 1. Overview stacked
+  var ctx1=resetCanvas('overviewChart');
+  if(ctx1){CI.ov=new Chart(ctx1,{type:'bar',
+    data:{labels:['성수','군포'],datasets:[
+      {label:'성공',data:[76.6,88.6],backgroundColor:c.ok},
+      {label:'실패',data:[23.1,9.7],backgroundColor:c.ng},
+      {label:'재세탁',data:[0.3,1.7],backgroundColor:c.rw},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:basePlugin,
+      scales:{x:{stacked:true,ticks:{color:c.sec},grid:{color:c.grid}},
+              y:{stacked:true,max:100,ticks:{color:c.sec,callback:function(v){return v+'%';}},grid:{color:c.grid}}}
+    }
+  });}
+
+  // 2. Color line chart
+  var ctx2=resetCanvas('colorLineChart');
+  if(ctx2){CI.cl=new Chart(ctx2,{type:'line',
+    data:{labels:BRIGHTNESS_SHORT,datasets:[
+      {label:'성수',data:BRIGHT_SS,borderColor:c.ss,backgroundColor:c.ss.replace('.82','.12'),fill:true,tension:.35,pointRadius:5,pointHoverRadius:7,borderWidth:2.5},
+      {label:'군포',data:BRIGHT_GP,borderColor:c.gp,backgroundColor:c.gp.replace('.82','.12'),fill:true,tension:.35,pointRadius:5,pointHoverRadius:7,borderWidth:2.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:basePlugin,
+      scales:{x:{ticks:{color:c.sec},grid:{color:c.grid}},
+              y:{min:50,max:100,ticks:{color:c.sec,callback:function(v){return v+'%';}},grid:{color:c.grid}}}
+    }
+  });}
+
+  // 3. Item horizontal bar (sorted by gap desc)
+  var sorted=[...ITEMS].sort(function(a,b){return (b.gp-b.ss)-(a.gp-a.ss);});
+  var ctx3=resetCanvas('itemChart');
+  if(ctx3){CI.item=new Chart(ctx3,{type:'bar',
+    data:{labels:sorted.map(function(d){return d.name;}),
+      datasets:[
+        {label:'성수',data:sorted.map(function(d){return d.ss;}),backgroundColor:c.ss,borderRadius:3},
+        {label:'군포',data:sorted.map(function(d){return d.gp;}),backgroundColor:c.gp,borderRadius:3},
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      indexAxis:'y',
+      plugins:{...basePlugin,tooltip:{enabled:true,callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.raw+'%';}}}},
+      scales:{x:{min:50,max:100,ticks:{color:c.sec,callback:function(v){return v+'%';}},grid:{color:c.grid}},
+              y:{ticks:{color:c.sec,font:{size:11}},grid:{color:c.grid}}}
+    }
+  });}
+
+  // 4. SS color stacked abs
+  var ctx4=resetCanvas('ssColorChart');
+  if(ctx4){CI.ssC=new Chart(ctx4,{type:'bar',
+    data:{labels:BRIGHTNESS_SHORT,datasets:[
+      {label:'성공',data:SS_OK,backgroundColor:c.ok},
+      {label:'실패',data:SS_NG,backgroundColor:c.ng},
+      {label:'재세탁',data:SS_RW,backgroundColor:c.rw},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:basePlugin,
+      scales:{x:{stacked:true,ticks:{color:c.sec},grid:{color:c.grid}},
+              y:{stacked:true,ticks:{color:c.sec},grid:{color:c.grid}}}
+    }
+  });}
+
+  // 5. GP color stacked abs
+  var ctx5=resetCanvas('gpColorChart');
+  if(ctx5){CI.gpC=new Chart(ctx5,{type:'bar',
+    data:{labels:BRIGHTNESS_SHORT,datasets:[
+      {label:'성공',data:GP_OK,backgroundColor:c.ok},
+      {label:'실패',data:GP_NG,backgroundColor:c.ng},
+      {label:'재세탁',data:GP_RW,backgroundColor:c.rw},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:basePlugin,
+      scales:{x:{stacked:true,ticks:{color:c.sec},grid:{color:c.grid}},
+              y:{stacked:true,ticks:{color:c.sec},grid:{color:c.grid}}}
+    }
+  });}
+
+  chartsBuilt=true;
+}
+
+function onThemeChange(){chartsBuilt=false;setTimeout(buildCharts,80);}
+
+// ============================================================
+// SWATCHES
+// ============================================================
+function buildSwatches(){
+  var grid=document.getElementById('swatchGrid');if(!grid)return;
+  var html='';
+  SWATCHES.forEach(function(s){
+    var rateColor=s.ok>=90?'#059669':s.ok>=75?'#d97706':'#e11d48';
+    html+='<div class="swatch-card">'+
+      '<div class="swatch-color" style="background:'+s.hex+'"></div>'+
+      '<div class="swatch-body">'+
+        '<div class="swatch-hex">'+s.hex+'</div>'+
+        '<div class="swatch-rate" style="color:'+rateColor+'">'+s.ok+'%</div>'+
+        '<div class="swatch-cnt">'+s.n.toLocaleString()+'건 기준</div>'+
+        '<div class="swatch-bar"><div class="swatch-bar-fill" style="width:'+s.ok+'%;background:'+rateColor+'"></div></div>'+
+      '</div>'+
+    '</div>';
+  });
+  grid.innerHTML=html;
+}
+
+// ============================================================
+// HEATMAP
+// ============================================================
+function cellBg(v,dk){
+  if(v===null||v===undefined)return dk?'rgba(255,255,255,0.03)':'rgba(0,0,0,0.03)';
+  if(v>=90)return dk?'rgba(16,185,129,0.25)':'#dcfce7';
+  if(v>=80)return dk?'rgba(16,185,129,0.12)':'#bbf7d0';
+  if(v>=70)return dk?'rgba(245,158,11,0.2)':'#fef9c3';
+  if(v>=60)return dk?'rgba(249,115,22,0.2)':'#ffedd5';
+  return dk?'rgba(244,63,94,0.25)':'#fee2e2';
+}
+function cellTxt(v,dk){
+  if(v===null)return dk?'#555':'#ccc';
+  if(v>=90)return dk?'#34d399':'#166534';
+  if(v>=75)return dk?'#fbbf24':'#854d0e';
+  return dk?'#fb7185':'#991b1b';
+}
+
+function buildHeatmap(){
+  var tbl=document.getElementById('heatmapTable');if(!tbl)return;
+  var dk=document.documentElement.classList.contains('theme-dark');
+  var html='<thead><tr><th>품목명</th>';
+  ['다크(0~1)','진한(1~3)','중간(3~6)','밝은(6~8)','화이트(8~10)'].forEach(function(h){html+='<th>'+h+'</th>';});
+  html+='</tr></thead><tbody>';
+  HMAP_ITEMS.forEach(function(item,ri){
+    html+='<tr><td>'+item+'</td>';
+    for(var ci=0;ci<5;ci++){
+      var v=HMAP_DATA[ri][ci],n=HMAP_CNT[ri][ci];
+      var bg=cellBg(v,dk),tc=cellTxt(v,dk);
+      if(n<5){html+='<td style="background:'+cellBg(null,dk)+'"><span style="color:var(--text-secondary);font-size:11px">-</span></td>';}
+      else{html+='<td style="background:var(--surface)"><span class="hm-cell" style="background:'+bg+';color:'+tc+'">'+v+'%<br><span class="sub-val">('+n+'건)</span></span></td>';}
+    }
+    html+='</tr>';
+  });
+  html+='</tbody>';
+  tbl.innerHTML=html;
+}
+
+// ============================================================
+// TABLE
+// ============================================================
+var curFilter='all', sortCol=7, sortAsc=false;
+
+function gap(d){return d.gp-d.ss;}
+function filterData(data,f){
+  if(f==='gap_high') return data.filter(function(d){return gap(d)>=15;});
+  if(f==='ss_top')   return data.filter(function(d){return d.ss>=85;});
+  if(f==='both_low') return data.filter(function(d){return d.ss<80&&d.gp<85;});
+  if(f==='ss_low')   return data.filter(function(d){return d.ss<70;});
+  return data;
+}
+function sortData(data){
+  return data.slice().sort(function(a,b){
+    var va,vb;
+    if(sortCol===0)return sortAsc?a.name.localeCompare(b.name,'ko'):b.name.localeCompare(a.name,'ko');
+    if(sortCol===1){va=a.ss_n;vb=b.ss_n;}
+    else if(sortCol===4){va=a.gp_n;vb=b.gp_n;}
+    else{va=gap(a);vb=gap(b);}
+    return sortAsc?va-vb:vb-va;
+  });
+}
+function renderTable(data){
+  var tb=document.getElementById('itemTbody');if(!tb)return;
+  var html='';
+  data.forEach(function(d){
+    var g=gap(d),gCls=g>=20?'gap-lg':g>=10?'gap-md':'gap-sm';
+    function bar(r,cls){return '<div class="bar-wrap"><div class="bar-bg"><div class="bar-fill '+cls+'" style="width:'+Math.round(r)+'%"></div></div><span class="rnum">'+r.toFixed(1)+'%</span></div>';}
+    html+='<tr>'+
+      '<td class="td-name">'+d.name+'</td>'+
+      '<td>'+d.ss_n.toLocaleString()+'</td>'+
+      '<td>'+bar(d.ss,'bar-ok')+'</td>'+
+      '<td>'+bar(100-d.ss,'bar-ng')+'</td>'+
+      '<td>'+d.gp_n.toLocaleString()+'</td>'+
+      '<td>'+bar(d.gp,'bar-ok')+'</td>'+
+      '<td>'+bar(100-d.gp,'bar-ng')+'</td>'+
+      '<td><span class="gap-pill '+gCls+'">+'+g.toFixed(1)+'%p</span></td>'+
+    '</tr>';
+  });
+  tb.innerHTML=html;
+}
+function updateTable(){renderTable(sortData(filterData(ITEMS,curFilter)));}
+function setFilter(f,btn){
+  curFilter=f;
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');updateTable();
+}
+function sortTable(c){
+  if(sortCol===c)sortAsc=!sortAsc;else{sortCol=c;sortAsc=false;}updateTable();
+}
+
+// ============================================================
+// DOWNLOAD
+// ============================================================
+async function downloadImage(){
+  var m=document.querySelector('.viz-menu');m.style.display='none';
+  try{
+    var url=await htmlToImage.toPng(document.body,{quality:1,pixelRatio:2});
+    var a=document.createElement('a');a.href=url;a.download='factory-spotting-v2.png';a.click();
+  }catch(e){console.error(e);}
+  m.style.display='';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded',function(){
+  updateTable();
+  buildSwatches();
+  buildHeatmap();
+  buildCharts();
+});
+</script>
+</body>
+</html>
