@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QC 인력 산출 계산기</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  background: #f0f4f8;
+  color: #1a202c;
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+.container { max-width: 980px; margin: 0 auto; }
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #718096; margin-bottom: 24px; }
+
+/* 탭 */
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  background: #e2e8f0; border-radius: 10px; padding: 4px;
+}
+.tab {
+  flex: 1; padding: 9px 8px; border: none; border-radius: 7px;
+  background: transparent; font-size: 12px; font-weight: 600;
+  color: #718096; cursor: pointer; transition: all .2s; white-space: nowrap;
+}
+.tab.active { background: #fff; color: #3182ce; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+/* 카드 */
+.card { background: #fff; border-radius: 14px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+.card-title { font-size: 12px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing:.05em; margin-bottom: 16px; }
+
+/* 입력 */
+.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.input-group { display: flex; flex-direction: column; gap: 6px; }
+.input-group label { font-size: 13px; font-weight: 600; color: #4a5568; }
+.input-group .hint { font-size: 11px; color: #a0aec0; }
+.input-row {
+  display: flex; align-items: center; gap: 8px;
+  background: #f7fafc; border: 1.5px solid #e2e8f0;
+  border-radius: 9px; padding: 10px 14px; transition: border-color .2s;
+}
+.input-row:focus-within { border-color: #3182ce; background: #ebf8ff; }
+.input-row input[type=number] {
+  flex: 1; border: none; background: transparent;
+  font-size: 18px; font-weight: 700; color: #1a202c; outline: none; width: 100%;
+}
+.input-row .unit { font-size: 13px; color: #718096; white-space: nowrap; }
+input[type=range] { width: 100%; accent-color: #3182ce; cursor: pointer; }
+.calc-btn {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #3182ce, #2b6cb0);
+  color: white; border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
+}
+.calc-btn:hover { opacity: .9; }
+
+/* 결과 hero */
+.result-hero {
+  background: linear-gradient(135deg, #2b6cb0, #3182ce);
+  border-radius: 14px; padding: 28px; color: white; text-align: center; margin-bottom: 16px;
+}
+.result-hero .label { font-size: 13px; opacity: .8; margin-bottom: 8px; }
+.result-hero .big-num { font-size: 72px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.result-hero .sub { font-size: 14px; opacity: .85; }
+
+/* metrics */
+.metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.metric { background: #fff; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+.metric .m-label { font-size: 11px; color: #718096; font-weight: 600; margin-bottom: 6px; }
+.metric .m-val { font-size: 22px; font-weight: 800; color: #2d3748; }
+.metric .m-unit { font-size: 11px; color: #a0aec0; }
+
+/* 시나리오 */
+.scenarios { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.scenario { border-radius: 12px; padding: 16px; text-align: center; border: 2px solid transparent; }
+.scenario.conservative { background: #fff5f5; border-color: #fc8181; }
+.scenario.standard    { background: #ebf8ff; border-color: #3182ce; }
+.scenario.aggressive  { background: #f0fff4; border-color: #48bb78; }
+.scenario .s-label { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+.scenario.conservative .s-label { color: #c53030; }
+.scenario.standard    .s-label { color: #2b6cb0; }
+.scenario.aggressive  .s-label { color: #276749; }
+.scenario .s-num { font-size: 28px; font-weight: 800; }
+.scenario.conservative .s-num { color: #c53030; }
+.scenario.standard    .s-num { color: #2b6cb0; }
+.scenario.aggressive  .s-num { color: #276749; }
+.scenario .s-sub { font-size: 11px; color: #718096; margin-top: 4px; }
+
+/* progress */
+.progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.progress-label { font-size: 12px; color: #4a5568; font-weight: 600; width: 100px; flex-shrink: 0; }
+.progress-bar-wrap { flex: 1; background: #e2e8f0; border-radius: 999px; height: 10px; overflow: hidden; }
+.progress-bar { height: 100%; border-radius: 999px; transition: width .6s ease; }
+.progress-val { font-size: 12px; font-weight: 700; color: #2d3748; width: 45px; text-align: right; }
+
+/* info-box */
+.info-box {
+  background: #fffbeb; border-left: 4px solid #f6ad55;
+  border-radius: 0 10px 10px 0; padding: 14px 16px;
+  font-size: 13px; color: #744210; margin-bottom: 16px; line-height: 1.6;
+}
+
+/* badge */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.badge-fast { background: #f0fff4; color: #276749; }
+.badge-mid  { background: #ebf8ff; color: #2b6cb0; }
+.badge-slow { background: #fff5f5; color: #c53030; }
+
+/* item table */
+.item-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.item-table th { background: #f7fafc; padding: 10px 12px; text-align: left; font-weight: 700; color: #718096; border-bottom: 1px solid #e2e8f0; }
+.item-table td { padding: 10px 12px; border-bottom: 1px solid #f0f4f8; color: #2d3748; }
+
+/* item input table */
+.item-input-table { width: 100%; border-collapse: collapse; }
+.item-input-table th { background: #f7fafc; padding: 9px 12px; font-size: 12px; font-weight: 700; color: #718096; text-align: left; border-bottom: 1px solid #e2e8f0; }
+.item-input-table td { padding: 8px 10px; border-bottom: 1px solid #f0f4f8; font-size: 13px; }
+.item-input-table input[type=number] { width: 90px; padding: 6px 10px; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: 14px; font-weight: 700; text-align: right; outline: none; }
+.item-input-table input[type=number]:focus { border-color: #3182ce; }
+.total-row td { font-weight: 700; background: #f7fafc; }
+
+.source-note { font-size: 11px; color: #a0aec0; text-align: center; margin-top: 8px; }
+
+/* ===== 조편성 탭 ===== */
+.shift-ratio-box {
+  background: #f7fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;
+}
+.shift-ratio-labels {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+}
+.shift-tag {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.shift-tag .s-name { font-size: 13px; font-weight: 700; }
+.shift-tag .s-time { font-size: 11px; color: #718096; }
+.shift-tag .s-pct  { font-size: 28px; font-weight: 800; }
+.dawn-color { color: #6b46c1; }
+.day-color  { color: #dd6b20; }
+.shift-bar-wrap {
+  position: relative; height: 28px; border-radius: 999px;
+  background: linear-gradient(to right, #e9d8fd 0%, #e9d8fd var(--dawn-pct), #feebc8 var(--dawn-pct), #feebc8 100%);
+  overflow: hidden; cursor: pointer;
+}
+.shift-bar-handle {
+  position: absolute; top: 50%; width: 20px; height: 28px;
+  background: #fff; border: 2px solid #a0aec0; border-radius: 4px;
+  transform: translate(-50%, -50%); cursor: ew-resize; z-index: 2;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.overlap-badge {
+  display: inline-block; background: #bee3f8; color: #2b6cb0;
+  border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; margin-top: 8px;
+}
+.hc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; grid-auto-rows: auto; }
+.hc-card {
+  border-radius: 10px; padding: 14px; text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.hc-card.dawn { background: #faf5ff; border: 1.5px solid #d6bcfa; }
+.hc-card.day  { background: #fffaf0; border: 1.5px solid #fbd38d; }
+.hc-card.total{ background: #ebf8ff; border: 1.5px solid #90cdf4; }
+.hc-card.ratio{ background: #f0fff4; border: 1.5px solid #9ae6b4; }
+.hc-label { font-size: 11px; font-weight: 700; color: #718096; margin-bottom: 6px; }
+.hc-val   { font-size: 22px; font-weight: 800; }
+.hc-unit  { font-size: 11px; color: #a0aec0; }
+.hc-card.dawn .hc-val { color: #6b46c1; }
+.hc-card.day  .hc-val { color: #dd6b20; }
+.hc-card.total .hc-val{ color: #2b6cb0; }
+.hc-card.ratio .hc-val{ color: #276749; }
+
+/* 월별 인원표 */
+.shift-month-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.shift-month-table th {
+  background: #f7fafc; padding: 9px 10px; font-weight: 700; color: #718096;
+  border-bottom: 1px solid #e2e8f0; text-align: center; white-space: nowrap;
+}
+.shift-month-table td {
+  padding: 9px 10px; border-bottom: 1px solid #f0f4f8; text-align: center;
+}
+.shift-month-table tr:last-child td { font-weight: 700; background: #f7fafc; }
+.shift-month-table .col-dawn { color: #6b46c1; font-weight: 700; }
+.shift-month-table .col-day  { color: #dd6b20; font-weight: 700; }
+.shift-month-table .col-total{ color: #2b6cb0; font-weight: 700; }
+
+/* 스케줄 그리드 */
+.schedule-section { overflow-x: auto; }
+.sched-table { border-collapse: collapse; min-width: 600px; width: 100%; font-size: 12px; }
+.sched-table th {
+  padding: 8px 6px; text-align: center; font-size: 11px; font-weight: 700;
+  color: #718096; border-bottom: 2px solid #e2e8f0; background: #f7fafc; white-space: nowrap;
+}
+.sched-table td { padding: 4px 3px; border: 1px solid #f0f4f8; text-align: center; }
+.sched-table .team-label {
+  text-align: left; padding: 5px 10px; font-weight: 700; font-size: 12px;
+  background: #f7fafc; border-right: 2px solid #e2e8f0; white-space: nowrap;
+}
+.sc-dawn {
+  background: #e9d8fd; color: #553c9a; font-weight: 700;
+  border-radius: 4px; font-size: 11px; padding: 3px 0;
+}
+.sc-day {
+  background: #feebc8; color: #9c4221; font-weight: 700;
+  border-radius: 4px; font-size: 11px; padding: 3px 0;
+}
+.sc-off {
+  background: #f7fafc; color: #a0aec0; font-size: 11px; padding: 3px 0;
+}
+.sc-overlap {
+  background: linear-gradient(135deg, #e9d8fd 50%, #feebc8 50%);
+  color: #2d3748; font-weight: 700; font-size: 10px; padding: 3px 0; border-radius: 4px;
+}
+.sched-divider td { background: #e2e8f0; height: 2px; padding: 0; }
+
+/* 슬라이더 */
+.shift-slider { width: 100%; accent-color: #6b46c1; cursor: pointer; margin: 8px 0; }
+
+/* 범례 */
+.sched-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; font-size: 12px; }
+.sched-leg-item { display: flex; align-items: center; gap: 5px; }
+.sched-leg-dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+/* overlap info */
+.overlap-info {
+  background: #ebf8ff; border-radius: 10px; padding: 12px 16px;
+  font-size: 12px; color: #2c5282; margin-bottom: 16px; line-height: 1.7;
+}
+
+/* ===== 인력계획 탭 ===== */
+/* 월별 요약 카드 */
+.month-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.month-card {
+  background: #fff; border-radius: 12px; padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07); cursor: pointer;
+  border: 2px solid transparent; transition: border-color .2s;
+}
+.month-card.active { border-color: #3182ce; }
+.month-card .mc-month { font-size: 12px; font-weight: 700; color: #718096; margin-bottom: 6px; }
+.month-card .mc-workers { font-size: 26px; font-weight: 800; color: #2d3748; line-height: 1; }
+.month-card .mc-range { font-size: 11px; color: #a0aec0; margin-top: 2px; }
+.month-card .mc-qty { font-size: 11px; color: #718096; margin-top: 6px; }
+.month-card .mc-bar { height: 4px; border-radius: 999px; background: #e2e8f0; margin-top: 8px; overflow: hidden; }
+.month-card .mc-bar-fill { height: 100%; border-radius: 999px; background: #3182ce; }
+
+/* 캘린더 */
+.plan-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.plan-header h3 { font-size: 16px; font-weight: 700; }
+.plan-nav { display: flex; gap: 8px; }
+.plan-nav button {
+  padding: 6px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; color: #4a5568;
+}
+.plan-nav button:hover { background: #ebf8ff; border-color: #3182ce; color: #3182ce; }
+
+.calendar { width: 100%; border-collapse: collapse; }
+.calendar th {
+  padding: 8px 4px; text-align: center; font-size: 11px;
+  font-weight: 700; color: #718096; border-bottom: 1px solid #e2e8f0;
+}
+.calendar td { padding: 3px; vertical-align: top; }
+.cal-cell {
+  min-height: 68px; border-radius: 8px; padding: 6px 8px;
+  position: relative; cursor: default;
+}
+.cal-cell.has-data { cursor: pointer; }
+.cal-cell:hover.has-data { box-shadow: 0 2px 8px rgba(0,0,0,0.12); transform: translateY(-1px); transition: all .15s; }
+.cal-day { font-size: 11px; font-weight: 600; color: #718096; margin-bottom: 4px; }
+.cal-workers { font-size: 20px; font-weight: 800; }
+.cal-workers .unit { font-size: 11px; font-weight: 600; }
+.cal-qty { font-size: 10px; color: #718096; margin-top: 2px; }
+/* 색상 등급 */
+.lv1 { background: #ebf8ff; } .lv1 .cal-workers { color: #2b6cb0; }
+.lv2 { background: #bee3f8; } .lv2 .cal-workers { color: #2c5282; }
+.lv3 { background: #90cdf4; } .lv3 .cal-workers { color: #1a365d; }
+.lv4 { background: #63b3ed; } .lv4 .cal-workers { color: #1a365d; }
+.lv5 { background: #3182ce; } .lv5 .cal-workers { color: #fff; } .lv5 .cal-qty { color: #bee3f8; }
+.lv6 { background: #2b6cb0; } .lv6 .cal-workers { color: #fff; } .lv6 .cal-qty { color: #bee3f8; }
+.empty-cell { background: #f7fafc; opacity: .4; }
+
+/* 범례 */
+.legend { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #4a5568; }
+.legend-dot { width: 14px; height: 14px; border-radius: 3px; }
+
+/* 연간 차트 */
+.chart-wrap { position: relative; height: 200px; display: flex; align-items: flex-end; gap: 2px; padding: 0 4px; }
+.chart-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.chart-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height .4s ease; cursor: pointer; position: relative; }
+.chart-bar:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  background: #1a202c; color: #fff; padding: 4px 8px; border-radius: 6px;
+  font-size: 11px; white-space: nowrap; z-index: 10; margin-bottom: 4px; pointer-events: none;
+}
+.chart-label { font-size: 9px; color: #a0aec0; text-align: center; margin-top: 3px; }
+
+/* 연인원 테이블 */
+.plan-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.plan-table th { background: #f7fafc; padding: 10px 14px; text-align: left; font-weight: 700; color: #718096; border-bottom: 1px solid #e2e8f0; }
+.plan-table td { padding: 10px 14px; border-bottom: 1px solid #f0f4f8; }
+.plan-table tr:last-child td { border-bottom: none; font-weight: 800; background: #f7fafc; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.tag-peak { background: #fed7d7; color: #c53030; }
+.tag-normal { background: #ebf8ff; color: #2b6cb0; }
+.tag-low { background: #f0fff4; color: #276749; }
+
+@media (max-width: 700px) {
+  .month-cards { grid-template-columns: repeat(2, 1fr); }
+  .metrics-grid { grid-template-columns: 1fr 1fr; }
+  .scenarios { grid-template-columns: 1fr; }
+  .input-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>QC 인력 산출 계산기</h1>
+  <p class="subtitle">품질검사 실데이터 60,385건 · 품목별 건수 2025년 212일 기반 · 군포 팩토리</p>
+
+  <div class="tabs">
+    <button class="tab" onclick="switchTab('plan')">📅 인력계획</button>
+    <button class="tab" onclick="switchTab('shift')">🔄 조편성</button>
+    <button class="tab active" onclick="switchTab('simple')">🔢 간편 계산</button>
+    <button class="tab" onclick="switchTab('detail')">📦 품목별</button>
+    <button class="tab" onclick="switchTab('data')">📊 현황</button>
+  </div>
+
+  <!-- ===================== 탭: 2026 인력계획 ===================== -->
+  <div id="tab-plan" style="display:none">
+
+    <!-- 가정 조건 배너 -->
+    <div class="info-box">
+      ⏰ <strong>작업조건:</strong> 04:00~18:00 (14시간/일) · 주중/주말 구분 없이 매일 운영 &nbsp;|&nbsp;
+      📐 <strong>산출기준:</strong> 2025년 실적 물량 · 품목별 실측 QC 소요시간 적용 (중앙값) &nbsp;|&nbsp;
+      🔄 <strong>적용범위:</strong> 2026년 6월~12월 (7개월)
+    </div>
+
+    <!-- 월별 요약 카드 -->
+    <div class="card">
+      <div class="card-title">월별 필요 인원 요약 — 클릭하면 상세 캘린더 표시</div>
+      <div class="month-cards" id="month-cards"></div>
+    </div>
+
+    <!-- 캘린더 뷰 -->
+    <div class="card">
+      <div class="plan-header">
+        <h3 id="cal-title">2026년 6월</h3>
+        <div class="plan-nav">
+          <button onclick="moveCal(-1)">◀ 이전달</button>
+          <button onclick="moveCal(1)">다음달 ▶</button>
+        </div>
+      </div>
+      <div class="legend">
+        <span style="font-size:11px;font-weight:700;color:#4a5568;margin-right:4px">인원 범위:</span>
+        <div class="legend-item"><div class="legend-dot lv1"></div> ~9명</div>
+        <div class="legend-item"><div class="legend-dot lv2"></div> 10명</div>
+        <div class="legend-item"><div class="legend-dot lv3"></div> 11명</div>
+        <div class="legend-item"><div class="legend-dot lv4"></div> 12~13명</div>
+        <div class="legend-item"><div class="legend-dot lv5"></div> 14명</div>
+        <div class="legend-item"><div class="legend-dot lv6"></div> 15명+</div>
+      </div>
+      <table class="calendar" id="cal-table">
+        <thead>
+          <tr>
+            <th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th>
+          </tr>
+        </thead>
+        <tbody id="cal-body"></tbody>
+      </table>
+      <div class="source-note" style="margin-top:12px">※ 2025년 실적 물량 동일 적용 · 14시간 작업기준 · 품목별 QC 중앙값 소요시간</div>
+    </div>
+
+    <!-- 연간 바 차트 -->
+    <div class="card">
+      <div class="card-title">일별 필요 인원 추이 (6~12월 전체)</div>
+      <div class="chart-wrap" id="annual-chart"></div>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:8px">
+        <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#718096"><div style="width:10px;height:10px;background:#3182ce;border-radius:2px"></div>일별 필요인원</div>
+      </div>
+      <div class="source-note">※ 가로축: 날짜순 / 세로축: 필요 QC 인원수</div>
+    </div>
+
+    <!-- 월별 연인원 테이블 -->
+    <div class="card">
+      <div class="card-title">월별 인력계획 요약표</div>
+      <table class="plan-table" id="plan-table"></table>
+      <div class="source-note" style="margin-top:12px">※ 연인원 = 해당 월 일별 필요인원 합계 / 1인 1일 근무 기준</div>
+    </div>
+  </div>
+
+  <!-- ===================== 탭: 조편성 계획 ===================== -->
+  <div id="tab-shift" style="display:none">
+
+    <div class="overlap-info">
+      ⏱ <strong>새벽조 04:00~12:00 (8시간)</strong> &nbsp;·&nbsp; <strong>낮조 09:00~18:00 (9시간)</strong><br>
+      겹치는 시간(09:00~12:00, 3시간)에는 두 조가 동시 투입됩니다. 개인은 <strong>주 5일 근무</strong> 기준이며, 7일 운영을 위해 헤드카운트는 <strong>일 필요인원 × 7/5배</strong>가 필요합니다.
+    </div>
+
+    <!-- 비중 슬라이더 -->
+    <div class="card">
+      <div class="card-title">새벽조 / 낮조 비중 조절</div>
+      <div class="shift-ratio-box">
+        <div class="shift-ratio-labels">
+          <div class="shift-tag">
+            <span class="s-name dawn-color">🌙 새벽조</span>
+            <span class="s-time">04:00 ~ 12:00</span>
+            <span class="s-pct dawn-color" id="dawn-pct-label">50%</span>
+          </div>
+          <div style="flex:1;padding:0 20px">
+            <input type="range" class="shift-slider" id="dawn-slider" min="10" max="90" step="5" value="50" oninput="onShiftSlider()">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#a0aec0;margin-top:2px">
+              <span>새벽조 최대</span><span>균등</span><span>낮조 최대</span>
+            </div>
+          </div>
+          <div class="shift-tag">
+            <span class="s-name day-color">☀️ 낮조</span>
+            <span class="s-time">09:00 ~ 18:00</span>
+            <span class="s-pct day-color" id="day-pct-label">50%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 평균 기준 헤드카운트 요약 -->
+      <div class="card-title" style="margin-top:4px">기준 월 평균 헤드카운트 (일 평균 필요인원 기준)</div>
+      <div class="hc-grid" id="hc-summary"></div>
+    </div>
+
+    <!-- 월별 헤드카운트 표 -->
+    <div class="card">
+      <div class="card-title">월별 헤드카운트 산출 (2026년 6~12월)</div>
+      <div style="overflow-x:auto">
+        <table class="shift-month-table" id="shift-month-table"></table>
+      </div>
+      <div class="source-note">※ 헤드카운트 = 일 필요인원 × (7÷5) 올림 · 주5일 근무 기준</div>
+    </div>
+
+    <!-- 주간 로테이션 스케줄 -->
+    <div class="card">
+      <div class="card-title">주간 로테이션 스케줄 (대표 주 기준)</div>
+      <div class="sched-legend">
+        <div class="sched-leg-item"><div class="sched-leg-dot" style="background:#e9d8fd"></div><span>새벽조 근무 (04~12)</span></div>
+        <div class="sched-leg-item"><div class="sched-leg-dot" style="background:#feebc8"></div><span>낮조 근무 (09~18)</span></div>
+        <div class="sched-leg-item"><div class="sched-leg-dot" style="background:#f7fafc;border:1px solid #e2e8f0"></div><span>휴무</span></div>
+      </div>
+      <div class="schedule-section">
+        <table class="sched-table" id="sched-table"></table>
+      </div>
+      <div class="source-note" style="margin-top:10px">
+        ※ 7개 팀이 순환 근무 (각 팀 5일 근무 · 2일 연속 휴무) · 같은 조 내 동일 로테이션 패턴 적용
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 탭: 간편 계산 ===================== -->
+  <div id="tab-simple">
+    <div class="card">
+      <div class="card-title">입력 조건</div>
+      <div class="input-grid">
+        <div class="input-group">
+          <label>총 의류 수량</label>
+          <div class="input-row">
+            <input type="number" id="total-items" value="500" min="1" max="99999" oninput="syncRange()">
+            <span class="unit">벌</span>
+          </div>
+          <input type="range" id="items-range" min="100" max="5000" step="50" value="500" oninput="syncInput()">
+          <span class="hint">슬라이더로 조절하거나 직접 입력</span>
+        </div>
+        <div class="input-group">
+          <label>1일 작업 시간</label>
+          <div class="input-row">
+            <input type="number" id="work-hours" value="8" min="1" max="24" oninput="syncHoursInput()">
+            <span class="unit">시간</span>
+          </div>
+          <input type="range" id="hours-range" min="4" max="14" step="0.5" value="8" oninput="syncHours()">
+          <span class="hint">인력계획 기준: 14시간 (04:00~18:00)</span>
+        </div>
+      </div>
+      <button class="calc-btn" onclick="calculate()">인원 산출하기</button>
+    </div>
+
+    <div id="result-section" style="display:none">
+      <div class="result-hero">
+        <div class="label">권장 QC 인원</div>
+        <div class="big-num" id="hero-num">—</div>
+        <div class="sub" id="hero-sub"></div>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric">
+          <div class="m-label">1인 시간당 처리</div>
+          <div class="m-val">73</div>
+          <div class="m-unit">건/시</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">1인 일일 처리</div>
+          <div class="m-val" id="m-daily">—</div>
+          <div class="m-unit">건/일</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">부적합 추가 예상</div>
+          <div class="m-val" id="m-fail">—</div>
+          <div class="m-unit">건 (14.4%)</div>
+        </div>
+      </div>
+      <div class="scenarios">
+        <div class="scenario conservative">
+          <div class="s-label">⚠️ 여유 인원</div>
+          <div class="s-num" id="s-conservative">—</div>
+          <div class="s-sub">건당 <span id="s-c-secs">—</span>초 기준</div>
+        </div>
+        <div class="scenario standard">
+          <div class="s-label">✅ 표준 권장</div>
+          <div class="s-num" id="s-standard">—</div>
+          <div class="s-sub">건당 <span id="s-s-secs">—</span>초 기준</div>
+        </div>
+        <div class="scenario aggressive">
+          <div class="s-label">🚀 최소 인원</div>
+          <div class="s-num" id="s-aggressive">—</div>
+          <div class="s-sub">건당 <span id="s-a-secs">—</span>초 기준</div>
+        </div>
+      </div>
+      <div class="info-box" id="info-box"></div>
+      <div class="card">
+        <div class="card-title">시나리오별 비교</div>
+        <div id="progress-section"></div>
+        <div class="source-note">※ 실제 데이터 기준: 평균 80.3건/시 · 중앙값 73.3건/시 · 분석 60,385건</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 탭: 품목별 계산 ===================== -->
+  <div id="tab-detail" style="display:none">
+    <div class="card">
+      <div class="card-title">품목별 수량 입력</div>
+      <table class="item-input-table">
+        <thead><tr><th>품목</th><th>중앙값 소요시간</th><th>등급</th><th>수량 (벌)</th></tr></thead>
+        <tbody id="item-tbody"></tbody>
+        <tfoot><tr class="total-row"><td colspan="2">합계</td><td></td><td><span id="detail-total">0</span> 벌</td></tr></tfoot>
+      </table>
+      <div class="input-group" style="margin-top:16px">
+        <label>1일 작업 시간</label>
+        <div class="input-row" style="max-width:200px">
+          <input type="number" id="detail-hours" value="14" min="1" max="24">
+          <span class="unit">시간</span>
+        </div>
+      </div>
+      <button class="calc-btn" onclick="calculateDetail()">상세 인원 산출</button>
+    </div>
+    <div id="detail-result" style="display:none">
+      <div class="result-hero">
+        <div class="label">품목별 합산 필요 인원</div>
+        <div class="big-num" id="d-hero-num">—</div>
+        <div class="sub" id="d-hero-sub"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">품목별 소요시간 기여도</div>
+        <div id="d-progress-section"></div>
+        <div class="source-note" style="margin-top:8px">※ 품목별 실측 중앙값 소요시간 적용</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 탭: 데이터 현황 ===================== -->
+  <div id="tab-data" style="display:none">
+    <div class="card">
+      <div class="card-title">실측 데이터 요약</div>
+      <div class="metrics-grid">
+        <div class="metric"><div class="m-label">총 분석 건수</div><div class="m-val">60,385</div><div class="m-unit">건</div></div>
+        <div class="metric"><div class="m-label">평균 처리속도</div><div class="m-val">80.3</div><div class="m-unit">건/시</div></div>
+        <div class="metric"><div class="m-label">중앙값 처리속도</div><div class="m-val">73.3</div><div class="m-unit">건/시</div></div>
+        <div class="metric"><div class="m-label">부적합률</div><div class="m-val">14.4</div><div class="m-unit">%</div></div>
+        <div class="metric"><div class="m-label">분석 작업자 수</div><div class="m-val">51</div><div class="m-unit">명</div></div>
+        <div class="metric"><div class="m-label">데이터 기간</div><div class="m-val">3~5월</div><div class="m-unit">2026</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">품목별 실측 소요시간</div>
+      <table class="item-table">
+        <thead><tr><th>품목명</th><th>평균</th><th>중앙값</th><th>분석건수</th><th>등급</th></tr></thead>
+        <tbody id="data-tbody"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">처리속도 분위수 (건/시)</div>
+      <div id="percentile-section"></div>
+      <div class="source-note">※ 51명 작업자, 191개 일별 세션 기준</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── 기준 데이터 ────────────────────────────────────────────────────────
+const ITEM_DATA = [
+  { name:'바지',             avg:38.8,  med:23.0,  cnt:17527 },
+  { name:'니트, 스웨터',     avg:41.7,  med:26.0,  cnt:13191 },
+  { name:'가디건',           avg:83.1,  med:61.0,  cnt:4434  },
+  { name:'재킷',             avg:103.6, med:82.0,  cnt:2669  },
+  { name:'코트, 트렌치코트', avg:89.2,  med:67.0,  cnt:2193  },
+  { name:'일반셔츠',         avg:66.5,  med:39.0,  cnt:1821  },
+  { name:'티셔츠',           avg:94.5,  med:70.0,  cnt:1697  },
+  { name:'정장재킷',         avg:95.6,  med:69.0,  cnt:1271  },
+  { name:'후드티, 맨투맨티', avg:103.4, med:83.5,  cnt:784   },
+  { name:'패딩',             avg:67.5,  med:46.0,  cnt:608   },
+  { name:'블라우스',         avg:111.1, med:97.5,  cnt:470   },
+  { name:'스커트',           avg:123.1, med:106.0, cnt:418   },
+  { name:'원피스, 점프수트', avg:130.3, med:116.0, cnt:286   },
+  { name:'롱패딩점퍼',       avg:106.2, med:86.0,  cnt:136   },
+  { name:'와이셔츠',         avg:99.5,  med:77.0,  cnt:147   },
+  { name:'캐주얼조끼',       avg:117.5, med:103.0, cnt:38    },
+];
+
+const CONSERV_TPH=36.9, MEDIAN_TPH=73.3, AGGRESS_TPH=124.1;
+const WORK_SECS_14 = 14 * 3600;
+const FAIL_RATE = 0.144;
+
+const PERCENTILES = [
+  {pct:'하위 10% (여유)',tph:36.9},{pct:'하위 25%',tph:56.6},
+  {pct:'중앙값 (50%)',tph:73.3},{pct:'상위 25%',tph:96.9},{pct:'상위 10% (숙련)',tph:124.1}
+];
+
+// ─── 2025 일별 실적 데이터 ────────────────────────────────────────────
+const DAILY = [{"date":"2025-06-01","m":6,"day":1,"dow":6,"qty":11456,"w":15},{"date":"2025-06-02","m":6,"day":2,"dow":0,"qty":10718,"w":13},{"date":"2025-06-03","m":6,"day":3,"dow":1,"qty":9722,"w":12},{"date":"2025-06-04","m":6,"day":4,"dow":2,"qty":9433,"w":12},{"date":"2025-06-05","m":6,"day":5,"dow":3,"qty":8866,"w":12},{"date":"2025-06-06","m":6,"day":6,"dow":4,"qty":9039,"w":12},{"date":"2025-06-07","m":6,"day":7,"dow":5,"qty":9696,"w":13},{"date":"2025-06-08","m":6,"day":8,"dow":6,"qty":9320,"w":12},{"date":"2025-06-09","m":6,"day":9,"dow":0,"qty":10229,"w":13},{"date":"2025-06-10","m":6,"day":10,"dow":1,"qty":9362,"w":12},{"date":"2025-06-11","m":6,"day":11,"dow":2,"qty":8021,"w":10},{"date":"2025-06-12","m":6,"day":12,"dow":3,"qty":8310,"w":11},{"date":"2025-06-13","m":6,"day":13,"dow":4,"qty":8722,"w":11},{"date":"2025-06-14","m":6,"day":14,"dow":5,"qty":10240,"w":13},{"date":"2025-06-15","m":6,"day":15,"dow":6,"qty":10814,"w":14},{"date":"2025-06-16","m":6,"day":16,"dow":0,"qty":11084,"w":14},{"date":"2025-06-17","m":6,"day":17,"dow":1,"qty":9289,"w":12},{"date":"2025-06-18","m":6,"day":18,"dow":2,"qty":9152,"w":12},{"date":"2025-06-19","m":6,"day":19,"dow":3,"qty":8529,"w":11},{"date":"2025-06-20","m":6,"day":20,"dow":4,"qty":8318,"w":11},{"date":"2025-06-21","m":6,"day":21,"dow":5,"qty":9920,"w":13},{"date":"2025-06-22","m":6,"day":22,"dow":6,"qty":10994,"w":14},{"date":"2025-06-23","m":6,"day":23,"dow":0,"qty":10655,"w":14},{"date":"2025-06-24","m":6,"day":24,"dow":1,"qty":8408,"w":11},{"date":"2025-06-25","m":6,"day":25,"dow":2,"qty":7876,"w":10},{"date":"2025-06-26","m":6,"day":26,"dow":3,"qty":7939,"w":10},{"date":"2025-06-27","m":6,"day":27,"dow":4,"qty":7900,"w":10},{"date":"2025-06-28","m":6,"day":28,"dow":5,"qty":10433,"w":14},{"date":"2025-06-29","m":6,"day":29,"dow":6,"qty":10819,"w":14},{"date":"2025-06-30","m":6,"day":30,"dow":0,"qty":9832,"w":12},{"date":"2025-07-01","m":7,"day":1,"dow":1,"qty":8273,"w":11},{"date":"2025-07-02","m":7,"day":2,"dow":2,"qty":7619,"w":10},{"date":"2025-07-03","m":7,"day":3,"dow":3,"qty":8103,"w":11},{"date":"2025-07-04","m":7,"day":4,"dow":4,"qty":8299,"w":11},{"date":"2025-07-05","m":7,"day":5,"dow":5,"qty":10315,"w":13},{"date":"2025-07-06","m":7,"day":6,"dow":6,"qty":10163,"w":13},{"date":"2025-07-07","m":7,"day":7,"dow":0,"qty":9751,"w":13},{"date":"2025-07-08","m":7,"day":8,"dow":1,"qty":8815,"w":12},{"date":"2025-07-09","m":7,"day":9,"dow":2,"qty":7431,"w":10},{"date":"2025-07-10","m":7,"day":10,"dow":3,"qty":7575,"w":10},{"date":"2025-07-11","m":7,"day":11,"dow":4,"qty":7792,"w":10},{"date":"2025-07-12","m":7,"day":12,"dow":5,"qty":9253,"w":12},{"date":"2025-07-13","m":7,"day":13,"dow":6,"qty":9952,"w":13},{"date":"2025-07-14","m":7,"day":14,"dow":0,"qty":10643,"w":14},{"date":"2025-07-15","m":7,"day":15,"dow":1,"qty":7959,"w":10},{"date":"2025-07-16","m":7,"day":16,"dow":2,"qty":7874,"w":10},{"date":"2025-07-17","m":7,"day":17,"dow":3,"qty":6108,"w":8},{"date":"2025-07-18","m":7,"day":18,"dow":4,"qty":6560,"w":9},{"date":"2025-07-19","m":7,"day":19,"dow":5,"qty":9219,"w":12},{"date":"2025-07-20","m":7,"day":20,"dow":6,"qty":10702,"w":14},{"date":"2025-07-21","m":7,"day":21,"dow":0,"qty":10240,"w":13},{"date":"2025-07-22","m":7,"day":22,"dow":1,"qty":8407,"w":11},{"date":"2025-07-23","m":7,"day":23,"dow":2,"qty":7689,"w":10},{"date":"2025-07-24","m":7,"day":24,"dow":3,"qty":8031,"w":11},{"date":"2025-07-25","m":7,"day":25,"dow":4,"qty":7028,"w":9},{"date":"2025-07-26","m":7,"day":26,"dow":5,"qty":9675,"w":13},{"date":"2025-07-27","m":7,"day":27,"dow":6,"qty":9823,"w":13},{"date":"2025-07-28","m":7,"day":28,"dow":0,"qty":10587,"w":14},{"date":"2025-07-29","m":7,"day":29,"dow":1,"qty":7612,"w":10},{"date":"2025-07-30","m":7,"day":30,"dow":2,"qty":7038,"w":9},{"date":"2025-07-31","m":7,"day":31,"dow":3,"qty":7586,"w":10},{"date":"2025-08-01","m":8,"day":1,"dow":4,"qty":7207,"w":10},{"date":"2025-08-02","m":8,"day":2,"dow":5,"qty":8612,"w":11},{"date":"2025-08-03","m":8,"day":3,"dow":6,"qty":8890,"w":12},{"date":"2025-08-04","m":8,"day":4,"dow":0,"qty":9447,"w":12},{"date":"2025-08-05","m":8,"day":5,"dow":1,"qty":6994,"w":9},{"date":"2025-08-06","m":8,"day":6,"dow":2,"qty":6547,"w":9},{"date":"2025-08-07","m":8,"day":7,"dow":3,"qty":7239,"w":10},{"date":"2025-08-08","m":8,"day":8,"dow":4,"qty":6671,"w":9},{"date":"2025-08-09","m":8,"day":9,"dow":5,"qty":8192,"w":11},{"date":"2025-08-10","m":8,"day":10,"dow":6,"qty":8870,"w":12},{"date":"2025-08-11","m":8,"day":11,"dow":0,"qty":8354,"w":11},{"date":"2025-08-12","m":8,"day":12,"dow":1,"qty":7455,"w":10},{"date":"2025-08-13","m":8,"day":13,"dow":2,"qty":6739,"w":9},{"date":"2025-08-14","m":8,"day":14,"dow":3,"qty":5086,"w":7},{"date":"2025-08-15","m":8,"day":15,"dow":4,"qty":5958,"w":8},{"date":"2025-08-16","m":8,"day":16,"dow":5,"qty":8567,"w":11},{"date":"2025-08-17","m":8,"day":17,"dow":6,"qty":8866,"w":11},{"date":"2025-08-18","m":8,"day":18,"dow":0,"qty":8220,"w":11},{"date":"2025-08-19","m":8,"day":19,"dow":1,"qty":7611,"w":10},{"date":"2025-08-20","m":8,"day":20,"dow":2,"qty":6704,"w":9},{"date":"2025-08-21","m":8,"day":21,"dow":3,"qty":7009,"w":9},{"date":"2025-08-22","m":8,"day":22,"dow":4,"qty":7062,"w":9},{"date":"2025-08-23","m":8,"day":23,"dow":5,"qty":9164,"w":12},{"date":"2025-08-24","m":8,"day":24,"dow":6,"qty":9823,"w":13},{"date":"2025-08-25","m":8,"day":25,"dow":0,"qty":9935,"w":13},{"date":"2025-08-26","m":8,"day":26,"dow":1,"qty":6943,"w":9},{"date":"2025-08-27","m":8,"day":27,"dow":2,"qty":7104,"w":9},{"date":"2025-08-28","m":8,"day":28,"dow":3,"qty":7626,"w":10},{"date":"2025-08-29","m":8,"day":29,"dow":4,"qty":7139,"w":9},{"date":"2025-08-30","m":8,"day":30,"dow":5,"qty":8773,"w":11},{"date":"2025-08-31","m":8,"day":31,"dow":6,"qty":10424,"w":14},{"date":"2025-09-01","m":9,"day":1,"dow":0,"qty":9796,"w":13},{"date":"2025-09-02","m":9,"day":2,"dow":1,"qty":7157,"w":9},{"date":"2025-09-03","m":9,"day":3,"dow":2,"qty":7586,"w":10},{"date":"2025-09-04","m":9,"day":4,"dow":3,"qty":7611,"w":10},{"date":"2025-09-05","m":9,"day":5,"dow":4,"qty":6418,"w":8},{"date":"2025-09-06","m":9,"day":6,"dow":5,"qty":8853,"w":11},{"date":"2025-09-07","m":9,"day":7,"dow":6,"qty":9568,"w":12},{"date":"2025-09-08","m":9,"day":8,"dow":0,"qty":9795,"w":12},{"date":"2025-09-09","m":9,"day":9,"dow":1,"qty":7021,"w":9},{"date":"2025-09-10","m":9,"day":10,"dow":2,"qty":7685,"w":10},{"date":"2025-09-11","m":9,"day":11,"dow":3,"qty":6039,"w":8},{"date":"2025-09-12","m":9,"day":12,"dow":4,"qty":5926,"w":8},{"date":"2025-09-13","m":9,"day":13,"dow":5,"qty":9701,"w":12},{"date":"2025-09-14","m":9,"day":14,"dow":6,"qty":10039,"w":13},{"date":"2025-09-15","m":9,"day":15,"dow":0,"qty":10612,"w":13},{"date":"2025-09-16","m":9,"day":16,"dow":1,"qty":7847,"w":10},{"date":"2025-09-17","m":9,"day":17,"dow":2,"qty":7296,"w":9},{"date":"2025-09-18","m":9,"day":18,"dow":3,"qty":6978,"w":9},{"date":"2025-09-19","m":9,"day":19,"dow":4,"qty":7089,"w":9},{"date":"2025-09-20","m":9,"day":20,"dow":5,"qty":9058,"w":11},{"date":"2025-09-21","m":9,"day":21,"dow":6,"qty":10374,"w":13},{"date":"2025-09-22","m":9,"day":22,"dow":0,"qty":10001,"w":12},{"date":"2025-09-23","m":9,"day":23,"dow":1,"qty":7543,"w":10},{"date":"2025-09-24","m":9,"day":24,"dow":2,"qty":8150,"w":10},{"date":"2025-09-25","m":9,"day":25,"dow":3,"qty":6997,"w":9},{"date":"2025-09-26","m":9,"day":26,"dow":4,"qty":8426,"w":11},{"date":"2025-09-27","m":9,"day":27,"dow":5,"qty":9811,"w":12},{"date":"2025-09-28","m":9,"day":28,"dow":6,"qty":11078,"w":14},{"date":"2025-09-29","m":9,"day":29,"dow":0,"qty":12923,"w":16},{"date":"2025-09-30","m":9,"day":30,"dow":1,"qty":7958,"w":10},{"date":"2025-10-01","m":10,"day":1,"dow":2,"qty":8954,"w":12},{"date":"2025-10-02","m":10,"day":2,"dow":3,"qty":8463,"w":11},{"date":"2025-10-03","m":10,"day":3,"dow":4,"qty":9691,"w":12},{"date":"2025-10-04","m":10,"day":4,"dow":5,"qty":9883,"w":12},{"date":"2025-10-05","m":10,"day":5,"dow":6,"qty":1566,"w":2},{"date":"2025-10-08","m":10,"day":8,"dow":2,"qty":8961,"w":11},{"date":"2025-10-09","m":10,"day":9,"dow":3,"qty":9343,"w":12},{"date":"2025-10-10","m":10,"day":10,"dow":4,"qty":9240,"w":11},{"date":"2025-10-11","m":10,"day":11,"dow":5,"qty":9850,"w":12},{"date":"2025-10-12","m":10,"day":12,"dow":6,"qty":10515,"w":13},{"date":"2025-10-13","m":10,"day":13,"dow":0,"qty":10576,"w":13},{"date":"2025-10-14","m":10,"day":14,"dow":1,"qty":9682,"w":12},{"date":"2025-10-15","m":10,"day":15,"dow":2,"qty":9460,"w":12},{"date":"2025-10-16","m":10,"day":16,"dow":3,"qty":9134,"w":11},{"date":"2025-10-17","m":10,"day":17,"dow":4,"qty":9283,"w":12},{"date":"2025-10-18","m":10,"day":18,"dow":5,"qty":10597,"w":13},{"date":"2025-10-19","m":10,"day":19,"dow":6,"qty":11520,"w":14},{"date":"2025-10-20","m":10,"day":20,"dow":0,"qty":12226,"w":15},{"date":"2025-10-21","m":10,"day":21,"dow":1,"qty":9637,"w":12},{"date":"2025-10-22","m":10,"day":22,"dow":2,"qty":9934,"w":13},{"date":"2025-10-23","m":10,"day":23,"dow":3,"qty":9783,"w":13},{"date":"2025-10-24","m":10,"day":24,"dow":4,"qty":10105,"w":13},{"date":"2025-10-25","m":10,"day":25,"dow":5,"qty":10541,"w":13},{"date":"2025-10-26","m":10,"day":26,"dow":6,"qty":12028,"w":15},{"date":"2025-10-27","m":10,"day":27,"dow":0,"qty":11989,"w":15},{"date":"2025-10-28","m":10,"day":28,"dow":1,"qty":10317,"w":13},{"date":"2025-10-29","m":10,"day":29,"dow":2,"qty":9852,"w":12},{"date":"2025-10-30","m":10,"day":30,"dow":3,"qty":9475,"w":12},{"date":"2025-10-31","m":10,"day":31,"dow":4,"qty":10225,"w":13},{"date":"2025-11-01","m":11,"day":1,"dow":5,"qty":11137,"w":14},{"date":"2025-11-02","m":11,"day":2,"dow":6,"qty":11574,"w":14},{"date":"2025-11-03","m":11,"day":3,"dow":0,"qty":11128,"w":14},{"date":"2025-11-04","m":11,"day":4,"dow":1,"qty":10061,"w":12},{"date":"2025-11-05","m":11,"day":5,"dow":2,"qty":9421,"w":12},{"date":"2025-11-06","m":11,"day":6,"dow":3,"qty":9485,"w":12},{"date":"2025-11-07","m":11,"day":7,"dow":4,"qty":9215,"w":12},{"date":"2025-11-08","m":11,"day":8,"dow":5,"qty":10316,"w":13},{"date":"2025-11-09","m":11,"day":9,"dow":6,"qty":11541,"w":14},{"date":"2025-11-10","m":11,"day":10,"dow":0,"qty":11314,"w":14},{"date":"2025-11-11","m":11,"day":11,"dow":1,"qty":10068,"w":12},{"date":"2025-11-12","m":11,"day":12,"dow":2,"qty":9145,"w":11},{"date":"2025-11-13","m":11,"day":13,"dow":3,"qty":9286,"w":11},{"date":"2025-11-14","m":11,"day":14,"dow":4,"qty":9094,"w":11},{"date":"2025-11-15","m":11,"day":15,"dow":5,"qty":10387,"w":13},{"date":"2025-11-16","m":11,"day":16,"dow":6,"qty":10902,"w":13},{"date":"2025-11-17","m":11,"day":17,"dow":0,"qty":10863,"w":13},{"date":"2025-11-18","m":11,"day":18,"dow":1,"qty":9344,"w":12},{"date":"2025-11-19","m":11,"day":19,"dow":2,"qty":8907,"w":11},{"date":"2025-11-20","m":11,"day":20,"dow":3,"qty":7299,"w":9},{"date":"2025-11-21","m":11,"day":21,"dow":4,"qty":7428,"w":9},{"date":"2025-11-22","m":11,"day":22,"dow":5,"qty":9436,"w":12},{"date":"2025-11-23","m":11,"day":23,"dow":6,"qty":10122,"w":12},{"date":"2025-11-24","m":11,"day":24,"dow":0,"qty":11042,"w":13},{"date":"2025-11-25","m":11,"day":25,"dow":1,"qty":9804,"w":12},{"date":"2025-11-26","m":11,"day":26,"dow":2,"qty":8434,"w":10},{"date":"2025-11-27","m":11,"day":27,"dow":3,"qty":8429,"w":10},{"date":"2025-11-28","m":11,"day":28,"dow":4,"qty":7313,"w":9},{"date":"2025-11-29","m":11,"day":29,"dow":5,"qty":9590,"w":11},{"date":"2025-11-30","m":11,"day":30,"dow":6,"qty":9931,"w":12},{"date":"2025-12-01","m":12,"day":1,"dow":0,"qty":10818,"w":13},{"date":"2025-12-02","m":12,"day":2,"dow":1,"qty":8543,"w":10},{"date":"2025-12-03","m":12,"day":3,"dow":2,"qty":8522,"w":10},{"date":"2025-12-04","m":12,"day":4,"dow":3,"qty":7836,"w":9},{"date":"2025-12-05","m":12,"day":5,"dow":4,"qty":6550,"w":8},{"date":"2025-12-06","m":12,"day":6,"dow":5,"qty":8319,"w":10},{"date":"2025-12-07","m":12,"day":7,"dow":6,"qty":9922,"w":12},{"date":"2025-12-08","m":12,"day":8,"dow":0,"qty":9491,"w":11},{"date":"2025-12-09","m":12,"day":9,"dow":1,"qty":8566,"w":10},{"date":"2025-12-10","m":12,"day":10,"dow":2,"qty":7728,"w":9},{"date":"2025-12-11","m":12,"day":11,"dow":3,"qty":7790,"w":9},{"date":"2025-12-12","m":12,"day":12,"dow":4,"qty":7357,"w":9},{"date":"2025-12-13","m":12,"day":13,"dow":5,"qty":8250,"w":9},{"date":"2025-12-14","m":12,"day":14,"dow":6,"qty":9403,"w":10},{"date":"2025-12-15","m":12,"day":15,"dow":0,"qty":9050,"w":10},{"date":"2025-12-16","m":12,"day":16,"dow":1,"qty":8155,"w":9},{"date":"2025-12-17","m":12,"day":17,"dow":2,"qty":8052,"w":9},{"date":"2025-12-18","m":12,"day":18,"dow":3,"qty":7308,"w":8},{"date":"2025-12-19","m":12,"day":19,"dow":4,"qty":7560,"w":9},{"date":"2025-12-20","m":12,"day":20,"dow":5,"qty":8505,"w":10},{"date":"2025-12-21","m":12,"day":21,"dow":6,"qty":10041,"w":11},{"date":"2025-12-22","m":12,"day":22,"dow":0,"qty":9074,"w":10},{"date":"2025-12-23","m":12,"day":23,"dow":1,"qty":7324,"w":8},{"date":"2025-12-24","m":12,"day":24,"dow":2,"qty":7200,"w":8},{"date":"2025-12-25","m":12,"day":25,"dow":3,"qty":7584,"w":8},{"date":"2025-12-26","m":12,"day":26,"dow":4,"qty":6321,"w":7},{"date":"2025-12-27","m":12,"day":27,"dow":5,"qty":7426,"w":8},{"date":"2025-12-28","m":12,"day":28,"dow":6,"qty":6703,"w":7},{"date":"2025-12-29","m":12,"day":29,"dow":0,"qty":8210,"w":9},{"date":"2025-12-30","m":12,"day":30,"dow":1,"qty":6654,"w":7},{"date":"2025-12-31","m":12,"day":31,"dow":2,"qty":6966,"w":8}];
+
+// ─── 월별 집계 ──────────────────────────────────────────────────────────
+function buildMonthSummary() {
+  const ms = {};
+  for (let m = 6; m <= 12; m++) {
+    const days = DAILY.filter(d => d.m === m);
+    const ws = days.map(d => d.w);
+    const totalQty = days.reduce((s, d) => s + d.qty, 0);
+    ms[m] = {
+      days: days.length,
+      totalQty,
+      avgQty: Math.round(totalQty / days.length),
+      avgW: +(ws.reduce((s,v)=>s+v,0)/ws.length).toFixed(1),
+      minW: Math.min(...ws),
+      maxW: Math.max(...ws),
+      totalW: ws.reduce((s,v)=>s+v,0)
+    };
+  }
+  return ms;
+}
+const MONTH_SUMMARY = buildMonthSummary();
+const MONTH_NAMES = {6:'6월',7:'7월',8:'8월',9:'9월',10:'10월',11:'11월',12:'12월'};
+
+// 날짜 → 데이터 맵
+const DAY_MAP = {};
+DAILY.forEach(d => { DAY_MAP[d.date] = d; });
+
+// ─── 탭 전환 ────────────────────────────────────────────────────────────
+const TAB_IDS = ['plan','shift','simple','detail','data'];
+function switchTab(name) {
+  TAB_IDS.forEach((t, i) => {
+    document.getElementById('tab-'+t).style.display = (t===name)?'':'none';
+    document.querySelectorAll('.tab')[i].classList.toggle('active', t===name);
+  });
+}
+
+// ─── 간편 계산 ──────────────────────────────────────────────────────────
+function syncRange() {
+  const v = parseInt(document.getElementById('total-items').value);
+  if (!isNaN(v)) document.getElementById('items-range').value = Math.min(v,5000);
+}
+function syncInput() { document.getElementById('total-items').value = document.getElementById('items-range').value; }
+function syncHours() { document.getElementById('work-hours').value = document.getElementById('hours-range').value; }
+function syncHoursInput() {
+  const v = parseFloat(document.getElementById('work-hours').value);
+  if (!isNaN(v)) document.getElementById('hours-range').value = Math.min(Math.max(v,4),14);
+}
+function calculate() {
+  const totalItems = parseInt(document.getElementById('total-items').value)||500;
+  const workHours  = parseFloat(document.getElementById('work-hours').value)||14;
+  const conservative = Math.ceil(totalItems/(CONSERV_TPH*workHours));
+  const standard     = Math.ceil(totalItems/(MEDIAN_TPH *workHours));
+  const aggressive   = Math.ceil(totalItems/(AGGRESS_TPH*workHours));
+  const failEst      = Math.round(totalItems*FAIL_RATE);
+  document.getElementById('hero-num').textContent = standard+'명';
+  document.getElementById('hero-sub').textContent = `총 ${totalItems.toLocaleString()}벌 · ${workHours}시간 기준 · 표준 권장`;
+  document.getElementById('m-daily').textContent = Math.round(MEDIAN_TPH*workHours).toLocaleString();
+  document.getElementById('m-fail').textContent  = failEst.toLocaleString();
+  document.getElementById('s-conservative').textContent = conservative+'명';
+  document.getElementById('s-standard').textContent     = standard+'명';
+  document.getElementById('s-aggressive').textContent   = aggressive+'명';
+  document.getElementById('s-c-secs').textContent = Math.round(3600/CONSERV_TPH);
+  document.getElementById('s-s-secs').textContent = Math.round(3600/MEDIAN_TPH);
+  document.getElementById('s-a-secs').textContent = Math.round(3600/AGGRESS_TPH);
+  document.getElementById('info-box').innerHTML =
+    `📊 <strong>${totalItems.toLocaleString()}벌</strong> 처리를 위해 표준 기준 <strong>${standard}명</strong>이 필요합니다. `+
+    `이 중 부적합(재작업) 예상 물량은 약 <strong>${failEst.toLocaleString()}건(14.4%)</strong>입니다. `+
+    `여유 있는 운영 시 <strong>${conservative}명</strong>, 숙련자 위주 운영 시 <strong>${aggressive}명</strong>으로 조정하세요.`;
+  const rows = [
+    {label:'⚠️ 여유 인원',val:conservative,color:'#fc8181'},
+    {label:'✅ 표준 권장',val:standard,    color:'#3182ce'},
+    {label:'🚀 최소 인원',val:aggressive,  color:'#48bb78'},
+  ];
+  document.getElementById('progress-section').innerHTML = rows.map(s=>{
+    const pct = Math.min(100,Math.round(s.val/conservative*100));
+    return `<div class="progress-row">
+      <span class="progress-label">${s.label}</span>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%;background:${s.color}"></div></div>
+      <span class="progress-val">${s.val}명</span></div>`;
+  }).join('');
+  document.getElementById('result-section').style.display='block';
+  document.getElementById('result-section').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ─── 품목별 계산 ────────────────────────────────────────────────────────
+function buildItemTable() {
+  document.getElementById('item-tbody').innerHTML = ITEM_DATA.map((item,i)=>{
+    let g,c;
+    if(item.med<40){g='빠름';c='badge-fast';}
+    else if(item.med<80){g='보통';c='badge-mid';}
+    else{g='느림';c='badge-slow';}
+    return `<tr><td>${item.name}</td><td>${item.med}초</td>
+      <td><span class="badge ${c}">${g}</span></td>
+      <td><input type="number" id="iq-${i}" value="0" min="0" oninput="updateDetailTotal()"></td></tr>`;
+  }).join('');
+}
+function updateDetailTotal() {
+  let t=0; ITEM_DATA.forEach((_,i)=>{t+=parseInt(document.getElementById('iq-'+i).value)||0;});
+  document.getElementById('detail-total').textContent=t.toLocaleString();
+}
+function calculateDetail() {
+  const wh = parseFloat(document.getElementById('detail-hours').value)||14;
+  const ws = wh*3600;
+  let totalSec=0,totalItems=0; const bd=[];
+  ITEM_DATA.forEach((item,i)=>{
+    const q=parseInt(document.getElementById('iq-'+i).value)||0;
+    if(q>0){const s=q*item.med;totalSec+=s;totalItems+=q;bd.push({name:item.name,qty:q,sec:s});}
+  });
+  if(totalItems===0){alert('수량을 입력해주세요.');return;}
+  const workers=Math.ceil(totalSec/ws);
+  const failEst=Math.round(totalItems*FAIL_RATE);
+  document.getElementById('d-hero-num').textContent=workers+'명';
+  document.getElementById('d-hero-sub').textContent=`총 ${totalItems.toLocaleString()}벌 · ${wh}시간 · 부적합 예상 ${failEst.toLocaleString()}건`;
+  const maxS=Math.max(...bd.map(b=>b.sec));
+  document.getElementById('d-progress-section').innerHTML = bd.map(b=>{
+    const pct=Math.round(b.sec/maxS*100);
+    return `<div class="progress-row">
+      <span class="progress-label" style="width:130px;font-size:11px">${b.name}</span>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%;background:#3182ce"></div></div>
+      <span class="progress-val" style="width:80px;font-size:11px">${b.qty}벌·${(b.sec/3600).toFixed(1)}h</span></div>`;
+  }).join('');
+  document.getElementById('detail-result').style.display='block';
+  document.getElementById('detail-result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ─── 데이터 현황 탭 ─────────────────────────────────────────────────────
+function buildDataTab() {
+  document.getElementById('data-tbody').innerHTML = [...ITEM_DATA].sort((a,b)=>b.cnt-a.cnt).map(item=>{
+    let g,c;
+    if(item.med<40){g='빠름';c='badge-fast';}
+    else if(item.med<80){g='보통';c='badge-mid';}
+    else{g='느림';c='badge-slow';}
+    return `<tr><td>${item.name}</td><td>${item.avg.toFixed(1)}초</td><td>${item.med.toFixed(1)}초</td>
+      <td>${item.cnt.toLocaleString()}건</td><td><span class="badge ${c}">${g}</span></td></tr>`;
+  }).join('');
+  const maxTPH=Math.max(...PERCENTILES.map(p=>p.tph));
+  document.getElementById('percentile-section').innerHTML = PERCENTILES.map(p=>{
+    const pct=Math.round(p.tph/maxTPH*100);
+    return `<div class="progress-row">
+      <span class="progress-label">${p.pct}</span>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%;background:#3182ce"></div></div>
+      <span class="progress-val">${p.tph}건/시</span></div>`;
+  }).join('');
+}
+
+// ─── 인력계획 탭 ────────────────────────────────────────────────────────
+let currentMonth = 6;
+
+function workerLevel(w) {
+  if(w<=9)return'lv1'; if(w===10)return'lv2'; if(w===11)return'lv3';
+  if(w<=13)return'lv4'; if(w===14)return'lv5'; return'lv6';
+}
+
+function buildMonthCards() {
+  const maxW = Math.max(...Object.values(MONTH_SUMMARY).map(s=>s.avgW));
+  document.getElementById('month-cards').innerHTML = Object.entries(MONTH_SUMMARY).map(([m, s])=>{
+    const pct = Math.round(s.avgW/maxW*100);
+    const isActive = parseInt(m)===currentMonth ? 'active' : '';
+    let tag='';
+    if(s.avgW>=12) tag='<span class="tag tag-peak">성수기</span>';
+    else if(s.avgW<=10) tag='<span class="tag tag-low">비수기</span>';
+    else tag='<span class="tag tag-normal">보통</span>';
+    return `<div class="month-card ${isActive}" onclick="selectMonth(${m})">
+      <div class="mc-month">${MONTH_NAMES[m]} ${tag}</div>
+      <div class="mc-workers">${s.avgW}<span style="font-size:14px;font-weight:600;color:#718096">명 평균</span></div>
+      <div class="mc-range">최소 ${s.minW}명 · 최대 ${s.maxW}명</div>
+      <div class="mc-qty">일평균 ${s.avgQty.toLocaleString()}건 · ${s.days}일</div>
+      <div class="mc-bar"><div class="mc-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function selectMonth(m) {
+  currentMonth = m;
+  buildMonthCards();
+  buildCalendar();
+}
+
+function moveCal(dir) {
+  currentMonth = Math.min(12, Math.max(6, currentMonth + dir));
+  buildMonthCards();
+  buildCalendar();
+}
+
+function buildCalendar() {
+  // 2026년 기준 달력 (2025 데이터 날짜의 day만 사용)
+  const year = 2026;
+  const m = currentMonth;
+  document.getElementById('cal-title').textContent = `2026년 ${m}월`;
+
+  // 2026년 해당 월 1일의 요일 (0=월,6=일)
+  const firstDow = new Date(year, m-1, 1).getDay(); // 0=일,6=토
+  const firstMon = firstDow === 0 ? 6 : firstDow - 1; // 월요일 기준
+  const daysInMonth = new Date(year, m, 0).getDate();
+
+  // 해당 월 데이터 맵 (day → data)
+  const monthDays = {};
+  DAILY.filter(d=>d.m===m).forEach(d=>{ monthDays[d.day]=d; });
+
+  let html = '';
+  let dayCount = 1;
+  let cellCount = 0;
+  const totalCells = Math.ceil((firstMon + daysInMonth) / 7) * 7;
+
+  html += '<tr>';
+  for (let cell = 0; cell < totalCells; cell++) {
+    if (cell % 7 === 0 && cell > 0) html += '</tr><tr>';
+    if (cell < firstMon || dayCount > daysInMonth) {
+      html += '<td><div class="cal-cell empty-cell"></div></td>';
+    } else {
+      const day = dayCount;
+      const data = monthDays[day];
+      if (data) {
+        const lv = workerLevel(data.w);
+        html += `<td><div class="cal-cell has-data ${lv}">
+          <div class="cal-day">${day}일</div>
+          <div class="cal-workers">${data.w}<span class="unit">명</span></div>
+          <div class="cal-qty">${data.qty.toLocaleString()}벌</div>
+        </div></td>`;
+      } else {
+        html += `<td><div class="cal-cell">
+          <div class="cal-day" style="color:#a0aec0">${day}일</div>
+          <div style="font-size:11px;color:#cbd5e0;margin-top:4px">—</div>
+        </div></td>`;
+      }
+      dayCount++;
+    }
+  }
+  html += '</tr>';
+  document.getElementById('cal-body').innerHTML = html;
+}
+
+function buildAnnualChart() {
+  const maxW = Math.max(...DAILY.map(d=>d.w));
+  const chartH = 180;
+  const html = DAILY.map(d=>{
+    const barH = Math.round((d.w/maxW)*chartH);
+    const lv = workerLevel(d.w);
+    const colors = {lv1:'#bee3f8',lv2:'#90cdf4',lv3:'#63b3ed',lv4:'#4299e1',lv5:'#3182ce',lv6:'#2b6cb0'};
+    const color = colors[lv]||'#3182ce';
+    const tip = `${d.date.slice(5).replace('-','/')} ${d.w}명 (${d.qty.toLocaleString()}벌)`;
+    return `<div class="chart-bar-group" style="height:${chartH}px;justify-content:flex-end">
+      <div class="chart-bar" style="height:${barH}px;background:${color}" data-tip="${tip}" onclick="selectMonth(${d.m})"></div>
+    </div>`;
+  }).join('');
+  document.getElementById('annual-chart').innerHTML = html;
+}
+
+function buildPlanTable() {
+  const months = [6,7,8,9,10,11,12];
+  const totalQty = months.reduce((s,m)=>s+MONTH_SUMMARY[m].totalQty,0);
+  const totalDays = months.reduce((s,m)=>s+MONTH_SUMMARY[m].days,0);
+  const totalPersonDays = months.reduce((s,m)=>s+MONTH_SUMMARY[m].totalW,0);
+
+  const rows = months.map(m=>{
+    const s = MONTH_SUMMARY[m];
+    let tag='';
+    if(s.avgW>=12) tag='<span class="tag tag-peak">성수기</span>';
+    else if(s.avgW<=10) tag='<span class="tag tag-low">비수기</span>';
+    else tag='<span class="tag tag-normal">보통</span>';
+    return `<tr>
+      <td><strong>${MONTH_NAMES[m]}</strong> ${tag}</td>
+      <td>${s.days}일</td>
+      <td>${s.totalQty.toLocaleString()}건</td>
+      <td>${s.avgQty.toLocaleString()}건/일</td>
+      <td style="color:#c53030;font-weight:700">${s.maxW}명</td>
+      <td style="color:#2b6cb0;font-weight:700">${Math.round(s.avgW)}명</td>
+      <td style="color:#276749">${s.minW}명</td>
+      <td style="font-weight:700">${s.totalW}인일</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('plan-table').innerHTML = `
+    <thead><tr>
+      <th>월</th><th>일수</th><th>총 물량</th><th>일평균</th>
+      <th>최대인원</th><th>평균인원</th><th>최소인원</th><th>연인원(합계)</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr>
+      <td>합계/평균</td>
+      <td>${totalDays}일</td>
+      <td>${totalQty.toLocaleString()}건</td>
+      <td>${Math.round(totalQty/totalDays).toLocaleString()}건/일</td>
+      <td style="color:#c53030">최대 16명</td>
+      <td style="color:#2b6cb0">평균 11.4명</td>
+      <td style="color:#276749">최소 7명</td>
+      <td>${totalPersonDays}인일</td>
+    </tr></tfoot>`;
+}
+
+// ─── 조편성 계획 ─────────────────────────────────────────────────────────
+
+// 주5일 헤드카운트 계산
+// dailyWorkers: 하루에 필요한 인원, shift 당
+// headcount = ceil(dailyWorkers * 7/5)
+function hc(daily) { return Math.ceil(daily * 7 / 5); }
+
+// 요일 이름
+const DOW_NAMES = ['월','화','수','목','금','토','일'];
+
+// 7개 팀 로테이션 패턴 (0=근무, 1=휴무, 월요일 기준 시작)
+// 팀 i는 i번째 날부터 5일 근무, 2일 휴무
+function getRotation(teamIdx) {
+  // 7팀: 각 팀 연속 2일 휴무가 한 칸씩 밀림
+  const pattern = [];
+  for (let d = 0; d < 7; d++) {
+    // 팀 i의 휴무일: (teamIdx*2) % 7 과 (teamIdx*2+1) % 7
+    // → 실제로는 연속 2일 휴무를 7팀에 고르게 배분
+    const off1 = (teamIdx * 2) % 7;
+    const off2 = (teamIdx * 2 + 1) % 7;
+    pattern.push(d === off1 || d === off2 ? 'off' : 'work');
+  }
+  return pattern;
+}
+
+function buildShiftTab() {
+  const dawnPct = parseInt(document.getElementById('dawn-slider').value);
+  const dayPct  = 100 - dawnPct;
+  const dawnR   = dawnPct / 100;
+  const dayR    = dayPct  / 100;
+
+  document.getElementById('dawn-pct-label').textContent = dawnPct + '%';
+  document.getElementById('day-pct-label').textContent  = dayPct  + '%';
+
+  // 전체 평균 일 필요인원
+  const allW = DAILY.map(d => d.w);
+  const avgW = Math.round(allW.reduce((s,v)=>s+v,0)/allW.length);
+
+  const avgDawn = Math.ceil(avgW * dawnR);
+  const avgDay  = Math.ceil(avgW * dayR);
+  const hcDawn  = hc(avgDawn);
+  const hcDay   = hc(avgDay);
+
+  // 헤드카운트 요약 카드
+  document.getElementById('hc-summary').innerHTML = `
+    <div class="hc-card dawn">
+      <div class="hc-label">🌙 새벽조 일 필요인원</div>
+      <div class="hc-val">${avgDawn}<span class="hc-unit">명/일</span></div>
+    </div>
+    <div class="hc-card day">
+      <div class="hc-label">☀️ 낮조 일 필요인원</div>
+      <div class="hc-val">${avgDay}<span class="hc-unit">명/일</span></div>
+    </div>
+    <div class="hc-card dawn" style="background:#f3e8ff;border-color:#b794f4">
+      <div class="hc-label">🌙 새벽조 헤드카운트</div>
+      <div class="hc-val">${hcDawn}<span class="hc-unit">명 (×7/5)</span></div>
+    </div>
+    <div class="hc-card day" style="background:#feebcb;border-color:#f6ad55">
+      <div class="hc-label">☀️ 낮조 헤드카운트</div>
+      <div class="hc-val">${hcDay}<span class="hc-unit">명 (×7/5)</span></div>
+    </div>
+    <div class="hc-card total" style="grid-column:span 2">
+      <div class="hc-label">📋 총 헤드카운트 (전체 평균 기준)</div>
+      <div class="hc-val">${hcDawn + hcDay}<span class="hc-unit">명</span></div>
+    </div>
+    <div class="hc-card ratio" style="grid-column:span 2">
+      <div class="hc-label">⚡ 중복 투입 시간 (09~12시, 하루 3시간)</div>
+      <div class="hc-val">${avgDawn + avgDay}<span class="hc-unit">명 동시 근무</span></div>
+    </div>`;
+
+  // 월별 헤드카운트 표
+  const months = [6,7,8,9,10,11,12];
+  let totalHcDawn=0, totalHcDay=0, totalPersonDays=0;
+  const tableRows = months.map(m => {
+    const s = MONTH_SUMMARY[m];
+    const mAvgW = Math.round(s.avgW);
+    const mMaxW = s.maxW;
+    const dWday = Math.ceil(mAvgW * dawnR);
+    const dWday2= Math.ceil(mAvgW * dayR);
+    const mHcD  = hc(dWday);
+    const mHcN  = hc(dWday2);
+    const mHcT  = mHcD + mHcN;
+    totalHcDawn += mHcD; totalHcDay += mHcN; totalPersonDays += mHcT;
+    // 최대 기준 헤드카운트
+    const maxHcD = hc(Math.ceil(mMaxW * dawnR));
+    const maxHcN = hc(Math.ceil(mMaxW * dayR));
+    return `<tr>
+      <td><strong>${MONTH_NAMES[m]}</strong></td>
+      <td>${s.days}일</td>
+      <td>${mAvgW}명</td>
+      <td class="col-dawn">${dWday}명</td>
+      <td class="col-day">${dWday2}명</td>
+      <td class="col-dawn">${mHcD}명</td>
+      <td class="col-day">${mHcN}명</td>
+      <td class="col-total">${mHcT}명</td>
+      <td style="color:#718096;font-size:11px">(최대 ${maxHcD+maxHcN}명)</td>
+    </tr>`;
+  });
+  document.getElementById('shift-month-table').innerHTML = `
+    <thead><tr>
+      <th>월</th><th>일수</th><th>일평균<br>필요인원</th>
+      <th class="col-dawn">🌙새벽조<br>일 필요</th>
+      <th class="col-day">☀️낮조<br>일 필요</th>
+      <th class="col-dawn">🌙새벽조<br>헤드카운트</th>
+      <th class="col-day">☀️낮조<br>헤드카운트</th>
+      <th class="col-total">총<br>헤드카운트</th>
+      <th>비고</th>
+    </tr></thead>
+    <tbody>${tableRows.join('')}</tbody>
+    <tfoot><tr>
+      <td colspan="5" style="text-align:right;font-weight:700">기간 평균 헤드카운트</td>
+      <td class="col-dawn">${Math.round(totalHcDawn/7)}명</td>
+      <td class="col-day">${Math.round(totalHcDay/7)}명</td>
+      <td class="col-total">${Math.round(totalPersonDays/7)}명</td>
+      <td></td>
+    </tr></tfoot>`;
+
+  // 주간 로테이션 스케줄 생성
+  buildScheduleTable(avgDawn, avgDay, dawnPct, dayPct);
+}
+
+function buildScheduleTable(avgDawn, avgDay, dawnPct, dayPct) {
+  const hcDawn = hc(avgDawn);
+  const hcDay  = hc(avgDay);
+
+  // 팀 크기 = 헤드카운트 / 7 (소수 있을 수 있음 → 범위 표시)
+  const teamSizeDawn = hcDawn / 7;
+  const teamSizeDay  = hcDay  / 7;
+
+  // 헤더: 월~일
+  const header = `<thead><tr>
+    <th style="text-align:left;min-width:90px">팀</th>
+    ${DOW_NAMES.map(d=>`<th>${d}</th>`).join('')}
+    <th>근무일</th><th>휴무일</th>
+  </tr></thead>`;
+
+  let rows = '';
+  // 새벽조 7팀
+  rows += `<tr class="sched-divider"><td colspan="10"></td></tr>`;
+  rows += `<tr><td class="team-label" colspan="10" style="color:#6b46c1;font-size:11px;padding:6px 10px">
+    🌙 새벽조 (04~12시) — 팀당 약 ${Math.ceil(teamSizeDawn)}명 · 총 ${hcDawn}명
+  </td></tr>`;
+  for (let t = 0; t < 7; t++) {
+    const pat = getRotation(t);
+    const workDays = pat.filter(p=>p==='work').length;
+    const offDays  = pat.filter(p=>p==='off').length;
+    const cells = pat.map(p => p==='work'
+      ? `<td><div class="sc-dawn">새벽조</div></td>`
+      : `<td><div class="sc-off">휴무</div></td>`).join('');
+    rows += `<tr>
+      <td class="team-label" style="color:#6b46c1">D팀${t+1} <span style="font-weight:400;color:#a0aec0;font-size:10px">(${Math.ceil(teamSizeDawn)}명)</span></td>
+      ${cells}
+      <td style="font-weight:700;color:#6b46c1">${workDays}일</td>
+      <td style="color:#a0aec0">${offDays}일</td>
+    </tr>`;
+  }
+
+  // 낮조 7팀
+  rows += `<tr class="sched-divider"><td colspan="10"></td></tr>`;
+  rows += `<tr><td class="team-label" colspan="10" style="color:#dd6b20;font-size:11px;padding:6px 10px">
+    ☀️ 낮조 (09~18시) — 팀당 약 ${Math.ceil(teamSizeDay)}명 · 총 ${hcDay}명
+  </td></tr>`;
+  for (let t = 0; t < 7; t++) {
+    const pat = getRotation(t);
+    const workDays = pat.filter(p=>p==='work').length;
+    const offDays  = pat.filter(p=>p==='off').length;
+    const cells = pat.map(p => p==='work'
+      ? `<td><div class="sc-day">낮조</div></td>`
+      : `<td><div class="sc-off">휴무</div></td>`).join('');
+    rows += `<tr>
+      <td class="team-label" style="color:#dd6b20">N팀${t+1} <span style="font-weight:400;color:#a0aec0;font-size:10px">(${Math.ceil(teamSizeDay)}명)</span></td>
+      ${cells}
+      <td style="font-weight:700;color:#dd6b20">${workDays}일</td>
+      <td style="color:#a0aec0">${offDays}일</td>
+    </tr>`;
+  }
+
+  // 합산 행 (매일 투입 인원)
+  rows += `<tr class="sched-divider"><td colspan="10"></td></tr>`;
+  const dailyTotals = DOW_NAMES.map((_, di) => {
+    let d=0, n=0;
+    for(let t=0;t<7;t++){
+      if(getRotation(t)[di]==='work'){ d += Math.ceil(avgDawn/7); n += Math.ceil(avgDay/7); }
+    }
+    return `<td style="font-size:11px;font-weight:700"><span style="color:#6b46c1">${d}</span>+<span style="color:#dd6b20">${n}</span></td>`;
+  }).join('');
+  rows += `<tr>
+    <td class="team-label" style="color:#2d3748">일별 투입 합계</td>
+    ${dailyTotals}
+    <td colspan="2" style="font-size:11px;color:#718096">명 (새벽+낮)</td>
+  </tr>`;
+
+  document.getElementById('sched-table').innerHTML = header + `<tbody>${rows}</tbody>`;
+}
+
+function onShiftSlider() { buildShiftTab(); }
+
+// ─── 초기화 ──────────────────────────────────────────────────────────────
+buildItemTable();
+buildDataTab();
+buildMonthCards();
+buildCalendar();
+buildAnnualChart();
+buildPlanTable();
+buildShiftTab();
+
+// 기본 탭: 인력계획
+switchTab('plan');
+</script>
+</body>
+</html>
