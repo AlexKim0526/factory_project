@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>안심케어 공정 종합 대시보드</title>
+<style>
+  :root{--navy:#1c2b4a;--blue:#2f6fed;--red:#e0483d;--green:#1f9d63;--amber:#d98a10;--purple:#7a5bd6;--gray:#6b7280;--line:#e6e8ec;--bg:#eef1f6;--card:#fff;}
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#1a2130;margin:0;background:var(--bg);line-height:1.65;}
+  .wrap{max-width:1040px;margin:0 auto;padding:34px 24px 90px;}
+  header{background:linear-gradient(135deg,#1c2b4a,#31548f);color:#fff;border-radius:16px;padding:26px 30px;margin-bottom:22px;}
+  header h1{font-size:26px;margin:0 0 8px;letter-spacing:-.5px;}
+  header p{margin:4px 0;font-size:14px;opacity:.95;}
+  header .goal{background:rgba(255,255,255,.12);border-radius:10px;padding:12px 16px;margin-top:14px;font-size:14px;}
+  h2{font-size:20px;color:var(--navy);margin:38px 0 6px;letter-spacing:-.3px;display:flex;align-items:center;gap:9px;}
+  h2 .no{background:var(--navy);color:#fff;width:27px;height:27px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  h3{font-size:15.5px;color:#26324a;margin:20px 0 8px;}
+  p{font-size:14.5px;margin:9px 0;}
+  .easy{background:#eef4fe;border:1px solid #cfe0fb;border-radius:10px;padding:11px 15px;margin:11px 0;font-size:13.8px;}
+  .easy b{color:var(--blue);}
+  .easy::before{content:"쉽게 말하면 ";font-weight:800;color:var(--blue);}
+  .warn{background:#fff6ec;border:1px solid #f3d9ad;}
+  .warn::before{content:"핵심 ";font-weight:800;color:var(--amber);}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;}
+  .kpi .c{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px 14px;text-align:center;}
+  .kpi .n{font-size:22px;font-weight:800;color:var(--navy);}
+  .kpi .l{font-size:12px;color:var(--gray);margin-top:3px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px 18px;margin:12px 0;}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0;background:var(--card);}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:center;}
+  th{background:var(--navy);color:#fff;font-weight:600;font-size:12.5px;}
+  td.l,th.l{text-align:left;}
+  tbody tr:nth-child(even){background:#fafbfc;}
+  .hi{color:var(--red);font-weight:700;}.lo{color:var(--green);font-weight:700;}.flat{color:var(--gray);}
+  .bars .b{display:flex;align-items:center;margin:7px 0;font-size:13.5px;}
+  .bars .lab{width:180px;flex:none;color:#33405a;}
+  .bars .tr{flex:1;background:#eef1f6;border-radius:6px;height:24px;overflow:hidden;}
+  .bars .fl{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;}
+  .bars .v{width:118px;flex:none;text-align:right;font-weight:700;color:#33405a;font-size:12.5px;}
+  .note{font-size:12px;color:var(--gray);}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:3px;}
+  .tag.hi{background:#fdecea;color:var(--red);}.tag.vol{background:#eef4fe;color:var(--blue);}.tag.ok{background:#e9f6ee;color:var(--green);}
+  .plan .i{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);}
+  .plan .i:last-child{border:none;}
+  .plan .n{flex:none;width:28px;height:28px;border-radius:8px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .plan .t{font-size:14px;}.plan .t b{color:var(--navy);}
+  .toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 20px;margin:16px 0;columns:2;font-size:13.5px;}
+  .toc a{color:var(--navy);text-decoration:none;}
+  footer{margin-top:40px;color:var(--gray);font-size:12px;border-top:1px solid var(--line);padding-top:14px;}
+  @media(max-width:720px){.kpi{grid-template-columns:1fr 1fr;}.grid2{grid-template-columns:1fr;}.toc{columns:1;}.bars .lab{width:120px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>안심케어 공정 종합 대시보드</h1>
+  <p>전체 의류 <b>795,304건</b> · 2026년 6~7월 출고 · 부산 제외(군포·성수) · 와이셔츠·프리미엄 포함</p>
+  <p>안심케어 = 세탁 품질에 만족 못 한 고객이 <b>환불 또는 재세탁</b>을 요청한 것 · 출고 후 30일 내 접수 기준</p>
+  <div class="goal">목적 — 안심케어로 온 옷이 <b>팩토리에서 어떤 공정(QC·스파팅)을 거쳤는지</b>, <b>어떤 공정에 문제가 있고 무엇을 개선해야 하는지</b>를 한눈에 파악.</div>
+</header>
+
+<div class="toc">
+① <a href="#s1">전체 규모 · 환불vs재세탁</a> · ② <a href="#s2">안심케어는 왜 생기나(사유)</a> · ③ <a href="#s3">위험 배수 한눈에</a> · ④ <a href="#s4">QC 공정</a> · ⑤ <a href="#s5">스파팅 공정</a> · ⑥ <a href="#s6">집중케어 심층</a> · ⑦ <a href="#s7">못지움→환불/재세탁</a> · ⑧ <a href="#s8">품목별</a> · ⑨ <a href="#s9">팩토리 비교</a> · ⑩ <a href="#s10">진단 & 개선방안</a>
+</div>
+
+<!-- ============ 핵심 요약 ============ -->
+<div class="kpi">
+  <div class="c"><div class="n">0.51%</div><div class="l">전체 안심케어율 (4,055건)</div></div>
+  <div class="c"><div class="n">환불 53%</div><div class="l">재세탁 47% (환불 약우세)</div></div>
+  <div class="c"><div class="n">41%</div><div class="l">안심케어 중 ‘얼룩’ 사유<br>(나머지 59%는 공정 밖)</div></div>
+  <div class="c"><div class="n">4.96배</div><div class="l">집중케어 얼룩 못지움<br>= 최대 위험 공정</div></div>
+</div>
+<div class="easy warn">한 문장 요약 — 안심케어의 <b>59%는 얼룩과 무관</b>(구김·수축·냄새)해 QC·스파팅으로 못 잡습니다. 얼룩(41%) 안에서는 <b>집중케어 못지움</b>이 압도적 위험이고, <b>QC를 통과하면 안전(0.93배)·못 하거나 부적합이면 위험</b>. 팩토리는 <b>성수=고가·집중케어 위험, 군포=QC 미진행 위험</b>으로 갈립니다.</div>
+
+<!-- ============ 1 ============ -->
+<h2 id="s1"><span class="no">1</span>전체 규모와 환불 vs 재세탁</h2>
+<table>
+<thead><tr><th class="l">구분</th><th>건수</th><th>비율</th><th class="l">설명</th></tr></thead>
+<tbody>
+<tr><td class="l">전체 의류(6~7월)</td><td>795,304</td><td>100%</td><td class="l">부산 제외, 전 품목</td></tr>
+<tr><td class="l">안심케어 접수</td><td>4,055</td><td>0.51%</td><td class="l">1,000벌 중 약 5벌</td></tr>
+<tr><td class="l">└ 환불(REFUND)</td><td>2,157</td><td>53.2%</td><td class="l">돈으로 돌려받음</td></tr>
+<tr><td class="l">└ 재세탁(REWASH)</td><td>1,898</td><td>46.8%</td><td class="l">다시 세탁 요청</td></tr>
+</tbody>
+</table>
+<div class="easy">안심케어는 드문 일(0.5%)이지만, 생기면 <b>환불이 재세탁보다 약간 많습니다</b>. 즉 절반 이상은 “다시 해달라”가 아니라 “환불”로 이어져 <b>매출 손실</b>이 됩니다.</div>
+
+<!-- ============ 2 ============ -->
+<h2 id="s2"><span class="no">2</span>안심케어는 왜 생기나 — 사유별</h2>
+<p>QC·스파팅은 <b>‘얼룩’을 다루는 공정</b>입니다. 그런데 안심케어 사유를 보면 얼룩은 41%뿐입니다.</p>
+<div class="card bars">
+  <div class="b"><div class="lab">얼룩·변색</div><div class="tr"><div class="fl" style="width:100%;background:var(--amber)">41.0%</div></div><div class="v">1,663건</div></div>
+  <div class="b"><div class="lab">구김·다림·보풀</div><div class="tr"><div class="fl" style="width:87%;background:var(--purple)">35.8%</div></div><div class="v">1,450건</div></div>
+  <div class="b"><div class="lab">수축·손상</div><div class="tr"><div class="fl" style="width:44%;background:#7a89a5">18.2%</div></div><div class="v">740건</div></div>
+  <div class="b"><div class="lab">냄새</div><div class="tr"><div class="fl" style="width:7%;background:#9aa4b5;min-width:28px">2.7%</div></div><div class="v">109건</div></div>
+  <div class="b"><div class="lab">기타(수선 등)</div><div class="tr"><div class="fl" style="width:14%;background:#c2c8d4">5.7%</div></div><div class="v">232건</div></div>
+</div>
+<div class="easy warn">QC·스파팅(얼룩 공정)으로 잡을 수 있는 건 <b>최대 41%</b>입니다. 나머지 59%(구김·수축·냄새)는 다림질·소재관리·탈취 등 <b>다른 공정 문제</b>라, 스파팅을 아무리 강화해도 줄지 않습니다.</div>
+<p class="note">한 건에 여러 사유가 붙을 수 있어 합이 100%를 넘습니다.</p>
+
+<!-- ============ 3 ============ -->
+<h2 id="s3"><span class="no">3</span>어떤 공정 상태가 안심케어를 키우나 — 위험 배수</h2>
+<p>각 공정 상태의 옷이 평균(0.51%) 대비 몇 배로 안심케어가 되는지입니다. <b>모두 통계적으로 유의</b>합니다.</p>
+<div class="card bars">
+  <div class="b"><div class="lab">집중케어 얼룩 못지움</div><div class="tr"><div class="fl" style="width:100%;background:var(--red)">2.53%</div></div><div class="v">4.96배 ⚠</div></div>
+  <div class="b"><div class="lab">얼룩 못지움(전체)</div><div class="tr"><div class="fl" style="width:61%;background:#e0662f">1.55%</div></div><div class="v">3.04배</div></div>
+  <div class="b"><div class="lab">얼룩 있는 옷(스파팅)</div><div class="tr"><div class="fl" style="width:47%;background:var(--amber)">1.19%</div></div><div class="v">2.34배</div></div>
+  <div class="b"><div class="lab">└ 얼룩 지웠어도(적합)</div><div class="tr"><div class="fl" style="width:45%;background:#c9a13a">1.15%</div></div><div class="v">2.26배</div></div>
+  <div class="b"><div class="lab">QC 부적합</div><div class="tr"><div class="fl" style="width:28%;background:#c26a2a">0.71%</div></div><div class="v">1.38배</div></div>
+  <div class="b"><div class="lab">QC 미진행</div><div class="tr"><div class="fl" style="width:21%;background:var(--gray)">0.53%</div></div><div class="v">1.04배</div></div>
+  <div class="b"><div class="lab">전체 평균</div><div class="tr"><div class="fl" style="width:20%;background:var(--gray)">0.51%</div></div><div class="v">1.00배</div></div>
+  <div class="b"><div class="lab">QC 통과(적합)</div><div class="tr"><div class="fl" style="width:18%;background:var(--green)">0.47%</div></div><div class="v">0.93배 ✓</div></div>
+</div>
+<div class="easy">위험은 <b>얼룩 → 못 지움 → 집중케어 못지움</b> 순으로 커집니다. <b>얼룩을 지워도 위험 2.26배</b>인 건, 얼룩 있는 옷 자체가 어려운 옷이라는 뜻입니다. QC는 <b>통과하면 안전(0.93배)</b>, 안 하거나 부적합이면 위험합니다.</div>
+<div class="easy warn">사유를 ‘얼룩’으로 좁히면 관계가 더 강해집니다 — <b>집중케어 못지움은 얼룩 사유 안심케어를 10.1배</b>, 못지움 5.9배, 얼룩옷 3.6배로 높입니다. (섞으면 희석돼 4.96배로 보임)</div>
+
+<!-- ============ 4 ============ -->
+<h2 id="s4"><span class="no">4</span>QC 공정 — 검사했나 / 통과했나</h2>
+<table>
+<thead><tr><th class="l">QC 상태</th><th>의류 수</th><th>안심케어</th><th>안심케어율</th><th>배수</th></tr></thead>
+<tbody>
+<tr><td class="l">QC 통과(적합)</td><td>389,713</td><td>1,841</td><td class="lo">0.472%</td><td class="lo">0.93배</td></tr>
+<tr><td class="l">QC 부적합</td><td>39,592</td><td>279</td><td class="hi">0.705%</td><td class="hi">1.38배</td></tr>
+<tr><td class="l">QC 미진행</td><td>365,999</td><td>1,935</td><td>0.529%</td><td>1.04배</td></tr>
+</tbody>
+</table>
+<div class="easy">검사해서 <b>통과한 옷은 불만이 가장 적고(0.47%)</b>, <b>불합격 난 옷은 위험(1.38배)</b>합니다. 그런데 QC를 <b>안 한 옷(미진행)은 평균 수준</b>이라 — 검사를 “했느냐”보다 <b>“부적합을 어떻게 처리하느냐”가 핵심</b>입니다. 미진행이 평균인 이유는 와이셔츠·프리미엄 같은 <b>QC 면제 품목</b>이 여기 많이 섞여서입니다.</div>
+<h3>QC 진행률 추이 — 6월 대비 7월에 크게 증가</h3>
+<div class="card bars">
+  <div class="b"><div class="lab">6월</div><div class="tr"><div class="fl" style="width:34%;background:var(--amber)">34.0%</div></div><div class="v">411,612개</div></div>
+  <div class="b"><div class="lab">7월</div><div class="tr"><div class="fl" style="width:75%;background:var(--green)">75.4%</div></div><div class="v">383,692개</div></div>
+</div>
+<p class="note">QC 커버리지가 6월 34% → 7월 75%로 확대됐습니다. 다만 위 표처럼 “검사량 자체”는 안심케어율을 크게 낮추지 못합니다(미진행 1.04배). 검사의 값어치는 부적합 후속 조치에서 나옵니다.</p>
+
+<!-- ============ 5 ============ -->
+<h2 id="s5"><span class="no">5</span>스파팅(얼룩제거) 공정</h2>
+<table>
+<thead><tr><th class="l">스파팅 상태</th><th>의류 수</th><th>안심케어</th><th>안심케어율</th><th>배수</th></tr></thead>
+<tbody>
+<tr><td class="l">스파팅 진행(=얼룩 있는 옷)</td><td>76,529</td><td>912</td><td class="hi">1.192%</td><td class="hi">2.34배</td></tr>
+<tr><td class="l">└ 얼룩 지움(적합)</td><td>61,941</td><td>715</td><td>1.154%</td><td>2.26배</td></tr>
+<tr><td class="l">└ 얼룩 못 지움</td><td>11,533</td><td>179</td><td class="hi">1.552%</td><td class="hi">3.04배</td></tr>
+<tr><td class="l">스파팅 없음</td><td>718,775</td><td>3,143</td><td>0.437%</td><td>0.86배</td></tr>
+</tbody>
+</table>
+<h3>못지움 종류별 — 집중케어가 압도적</h3>
+<table>
+<thead><tr><th class="l">못지움 종류</th><th>의류 수</th><th>안심케어</th><th>안심케어율</th><th>배수</th></tr></thead>
+<tbody>
+<tr><td class="l">집중케어 못지움</td><td>5,145</td><td>130</td><td class="hi">2.527%</td><td class="hi">4.96배</td></tr>
+<tr><td class="l">only spotting</td><td>918</td><td>10</td><td>1.089%</td><td>2.14배</td></tr>
+<tr><td class="l">Post(1차 QC 이후)</td><td>5,003</td><td>36</td><td>0.720%</td><td>1.41배</td></tr>
+<tr><td class="l">Pre(1차 QC 이전)</td><td>467</td><td>3</td><td>0.642%</td><td>1.26배</td></tr>
+</tbody>
+</table>
+<div class="easy">얼룩이 있는 옷은 지워도 위험이 높지만, <b>못 지우면 더 높아집니다(3.04배)</b>. 특히 <b>집중케어에서 못 지운 건 4.96배</b>. 반대로 일반 라인(Post)에서 못 지운 건은 1.41배로 내부에서 잘 관리됩니다.</div>
+
+<!-- ============ 6 ============ -->
+<h2 id="s6"><span class="no">6</span>집중케어 심층 — 어려운 옷 세그먼트</h2>
+<div class="kpi">
+  <div class="c"><div class="n">29,036개</div><div class="l">집중케어 전체 (전체의 3.65%)</div></div>
+  <div class="c"><div class="n">2.18%</div><div class="l">집중케어 안심케어율</div></div>
+  <div class="c"><div class="n">4.88배</div><div class="l">일반(0.45%) 대비</div></div>
+  <div class="c"><div class="n">17.8%</div><div class="l">못 지운 채 처리된 비율</div></div>
+</div>
+<table>
+<thead><tr><th class="l">집중케어 스파팅 결과</th><th>건수</th><th>비중</th><th>안심케어율</th></tr></thead>
+<tbody>
+<tr><td class="l">스파팅 없음(정상)</td><td>503</td><td>1.7%</td><td>1.39%</td></tr>
+<tr><td class="l">스파팅 적합(얼룩 지움)</td><td>23,375</td><td>80.5%</td><td>2.12%</td></tr>
+<tr><td class="l">재세탁</td><td>13</td><td>0.0%</td><td>0%</td></tr>
+<tr><td class="l">얼룩 못 지움</td><td class="hi">5,145</td><td class="hi">17.7%</td><td class="hi">2.53%</td></tr>
+<tr><td class="l"><b>집중케어 전체</b></td><td><b>29,036</b></td><td>100%</td><td><b>2.18%</b></td></tr>
+</tbody>
+</table>
+<div class="easy warn">집중케어는 대부분(80.5%) 얼룩을 잘 지워 나가는데도, <b>잘 지운 것조차 안심케어율 2.12%</b>(일반의 약 5배)입니다. 즉 <b>‘집중케어 대상 옷’이라는 것 자체가 근본 위험</b>이고, 못지움은 그 위에 얹히는 추가 악화(2.12%→2.53%)입니다.</div>
+<h3>같은 ‘못지움’이라도 집중케어가 훨씬 위험</h3>
+<table>
+<thead><tr><th class="l">못지움 그룹</th><th>의류 수</th><th>안심케어율</th></tr></thead>
+<tbody>
+<tr><td class="l">집중케어 못지움</td><td>5,145</td><td class="hi">2.53%</td></tr>
+<tr><td class="l">일반 못지움</td><td>6,388</td><td>0.77%</td></tr>
+</tbody>
+</table>
+<p class="note">→ 같은 못지움이라도 집중케어가 일반의 3.3배. 얼룩 난도·고가·고기대가 겹친 세그먼트.</p>
+
+<!-- ============ 7 ============ -->
+<h2 id="s7"><span class="no">7</span>못지움 → 환불? 재세탁? 그리고 “왜 재세탁하나”</h2>
+<p>집중케어 못지움으로 안심케어가 된 <b>130건</b>의 선택:</p>
+<table>
+<thead><tr><th class="l">선택</th><th>건수</th><th>비율</th><th class="l">이 중 ‘얼룩’ 사유</th></tr></thead>
+<tbody>
+<tr><td class="l">환불</td><td>76</td><td>58%</td><td class="l">65건 (86%)</td></tr>
+<tr><td class="l">재세탁</td><td>54</td><td>42%</td><td class="l">44건 (81%)</td></tr>
+</tbody>
+</table>
+<div class="easy warn">공장이 “못 지운다”고 판정한 옷을 <b>고객은 다시 재세탁 요청(54건)</b>합니다. 그 <b>81%가 여전히 ‘얼룩’ 사유</b> — 즉 고객은 “못 지운다”는 <b>내부 판정을 모른 채</b> 얼룩이 남은 걸 보고 “다시 지워달라”고 합니다. 이미 못 지운다고 결론 난 얼룩이라 재세탁해도 또 실패 → <b>재작업·재불만 루프</b>가 생깁니다.</div>
+<div class="easy">개선 포인트: 못지움 판정 건은 <b>출고 전에 “이 얼룩은 제거가 어렵다”를 고객에게 미리 알리고 보상/환불 옵션</b>을 주면, 승산 없는 재세탁 반복을 줄일 수 있습니다.</div>
+
+<!-- ============ 8 ============ -->
+<h2 id="s8"><span class="no">8</span>품목별 — 와이셔츠 · 프리미엄 · 일반</h2>
+<table>
+<thead><tr><th class="l">품목</th><th>의류 수</th><th>안심케어</th><th>안심케어율</th><th class="l">특징</th></tr></thead>
+<tbody>
+<tr><td class="l">프리미엄</td><td>10,802</td><td>88</td><td class="hi">0.815%</td><td class="l">가장 고위험. 거의 QC 면제</td></tr>
+<tr><td class="l">일반</td><td>604,348</td><td>3,343</td><td>0.553%</td><td class="l">기준</td></tr>
+<tr><td class="l">와이셔츠</td><td>180,154</td><td>624</td><td class="lo">0.346%</td><td class="l">저위험. 표준화 세탁</td></tr>
+</tbody>
+</table>
+<div class="easy">고가·고기대인 <b>프리미엄이 가장 위험(0.82%)</b>, 표준화된 <b>와이셔츠가 가장 안전(0.35%)</b>입니다. 와이셔츠·프리미엄은 원래 <b>QC 대상이 아니라</b>(면제) QC 지표로는 평가가 어렵습니다.</div>
+
+<!-- ============ 9 ============ -->
+<h2 id="s9"><span class="no">9</span>팩토리 비교 — 군포 vs 성수</h2>
+<table>
+<thead><tr><th class="l">지표</th><th>군포</th><th>성수</th><th class="l">읽는 법</th></tr></thead>
+<tbody>
+<tr><td class="l">의류 수</td><td>470,655</td><td>324,649</td><td class="l"></td></tr>
+<tr><td class="l">전체 안심케어율</td><td>0.569%</td><td class="lo">0.425%</td><td class="l">성수가 낮음</td></tr>
+<tr><td class="l">QC 통과율(안심케어)</td><td>0.505%</td><td>0.429%</td><td class="l"></td></tr>
+<tr><td class="l">QC 부적합(안심케어율)</td><td>0.548%</td><td class="hi">0.978%</td><td class="l">성수는 QC가 위험을 잘 가려냄(2.3배). 군포는 변별력 약함</td></tr>
+<tr><td class="l">QC 미진행(안심케어율)</td><td class="hi">0.635%</td><td>0.364%</td><td class="l">군포는 미검사 물량에서 불만 많음</td></tr>
+<tr><td class="l">얼룩옷(안심케어율)</td><td>1.08%</td><td class="hi">1.42%</td><td class="l">성수 얼룩옷이 더 위험</td></tr>
+<tr><td class="l">집중케어 못지움(안심케어율)</td><td>2.20%</td><td class="hi">3.47%</td><td class="l">성수 집중케어가 특히 취약</td></tr>
+</tbody>
+</table>
+<div class="easy warn"><b>두 공장의 문제 지점이 다릅니다.</b> 군포는 <b>QC를 안 거친 물량(미진행 0.635%)</b>에서 불만이 많고 QC 변별력이 약합니다 → “QC 기준·커버리지” 문제. 성수는 <b>QC가 부적합을 잘 잡지만(0.978%), 얼룩·집중케어 난도 물량</b>에서 취약합니다 → “어려운 얼룩·집중케어 처리” 문제.</div>
+
+<!-- ============ 10 ============ -->
+<h2 id="s10"><span class="no">10</span>진단 & 개선 방안</h2>
+<div class="card">
+<h3>공정별 진단 요약</h3>
+<table>
+<thead><tr><th class="l">공정</th><th class="l">문제</th><th class="l">근거 숫자</th></tr></thead>
+<tbody>
+<tr><td class="l">집중케어</td><td class="l">세그먼트 자체 고위험 + 못지움 시 최악</td><td class="l">전체 2.18%(4.88배), 못지움 2.53%(얼룩사유 10.1배)</td></tr>
+<tr><td class="l">스파팅</td><td class="l">얼룩옷은 지워도 위험, 못지움은 더</td><td class="l">얼룩옷 2.34배, 못지움 3.04배</td></tr>
+<tr><td class="l">QC</td><td class="l">검사量보다 ‘부적합 처리’가 관건</td><td class="l">통과 0.93배 vs 부적합 1.38배, 미진행 1.04배</td></tr>
+<tr><td class="l">못지움 응대</td><td class="l">못지움 판정 미고지 → 재세탁 재요청 루프</td><td class="l">재세탁 54건의 81%가 얼룩 사유</td></tr>
+<tr><td class="l">공정 밖</td><td class="l">불만의 59%(구김·수축·냄새)는 QC/스파팅 밖</td><td class="l">얼룩 41%뿐</td></tr>
+</tbody>
+</table>
+</div>
+<div class="card plan">
+  <div class="i"><div class="n">1</div><div class="t"><b>집중케어 얼룩제거 최우선 <span class="tag hi">4.96배</span></b> — 발송 전 재검수·재스파팅 의무화, 얼룩제거 성공률 KPI화. 특히 <b>성수 집중케어(3.47%)</b> 집중 관리.</div></div>
+  <div class="i"><div class="n">2</div><div class="t"><b>못지움 판정 건 ‘사전 고지’ <span class="tag hi">루프 차단</span></b> — 출고 전 “이 얼룩은 제거 어려움” 안내 + 보상/환불 옵션. 승산 없는 재세탁 반복(재작업 비용)과 재불만을 줄임.</div></div>
+  <div class="i"><div class="n">3</div><div class="t"><b>얼룩옷 2차 검수 라인 <span class="tag hi">2.34배</span> <span class="tag vol">물량</span></b> — 스파팅 대상은 지운 뒤에도 잔흔·변색 확인 후 출고.</div></div>
+  <div class="i"><div class="n">4</div><div class="t"><b>QC는 ‘부적합 재작업’에 집중 <span class="tag hi">1.38배</span></b> — 검사량 무작정 확대보다, 부적합 건을 그대로 출고하지 말고 재작업. <b>군포는 QC 기준·변별력 점검</b>(부적합≈통과), <b>성수는 부적합 재작업</b> 강화.</div></div>
+  <div class="i"><div class="n">5</div><div class="t"><b>비-얼룩 59% 별도 트랙 <span class="tag vol">물량</span></b> — 구김·다림(36%)→프레싱 표준화, 수축·손상(18%)→소재별 세탁강도·건조, 냄새(3%)→탈취. QC/스파팅으로는 안 줄어드는 별도 과제.</div></div>
+</div>
+
+<footer>
+분석 생성일 2026-08-14 · 데이터: 전체 의류 795,304건(2026-06~07, 부산 제외, 와이셔츠·프리미엄 포함) · 안심케어 = 출고 후 30일 내 재세탁/환불 접수 · 지표: 조건부 발생률 및 평균 대비 배수 · 얼룩/못지움/집중케어 관계 통계적으로 유의(p&lt;0.001) · 프리미엄·소표본 셀은 방향 참고용
+</footer>
+</div>
+</body>
+</html>
